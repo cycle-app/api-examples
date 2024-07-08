@@ -1,0 +1,19 @@
+{
+  "name": "api-examples",
+  "version": "1.0.0",
+  "description": "This repository provides a collection of examples demonstrating how to use the Cycle API with TypeScript. These examples cover various common use cases such as fetching data and handling webhooks.",
+  "main": "index.js",
+  "scripts": {
+    "import:canny": "ts-node src/examples/import-canny/index.ts"
+  },
+  "author": "Kevin Tassi <kevin@cycle.app>",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.14.9",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.2"
+  },
+  "engines": {
+    "node": "18.19.0"
+  }
+}
