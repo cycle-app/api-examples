@@ -7,7 +7,7 @@ export const slug = 'WORKSPACE_SLUG';
  * Replace with your cycle token
  * @see https://docs.cycle.app/the-graphql-api/authentication#create-a-personal-api-key
  */
-export const token = 'TOKEN';
+export const token = '';
 
 /**
  * Cycle endpoint

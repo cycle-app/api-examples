@@ -1,4 +1,5 @@
 export * from './attributes';
+export * from './change-log';
 export * from './doc-types';
 export * from './doc';
 export * from './workspace';
