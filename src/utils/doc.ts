@@ -84,11 +84,14 @@ export const createDoc = async ({
     query,
     variables,
   });
+  console.log('response', response);
   if (response?.data?.addNewDoc) {
     return response?.data?.addNewDoc || null;
   } else {
-    console.log('--', JSON.stringify(variables));
-    console.log('++', JSON.stringify(response));
+    console.group();
+    console.log('Variables:', JSON.stringify(variables));
+    console.log('Responses:', JSON.stringify(response));
+    console.groupEnd();
     process.exit();
   }
 };
@@ -162,7 +165,7 @@ export const createFeedback = async ({
     query,
     variables,
   });
-  return response.data.createFeedback;
+  return response?.data?.createFeedback || null;
 };
 
 export const createInsight = async ({
@@ -228,69 +231,42 @@ export const createInsight = async ({
   return response.data.createFeedback.id;
 };
 
-const a = {
-  title: 'Appointment leads',
-  doctypeId: 'RG9jdHlwZV8xN2RmNmVjMC1kODZmLTRhYWMtYTc3MC00Mjg3YTI4NjRjZWU=',
-  productId: 'UHJvZHVjdF85YmZiODg3Yy1mMDM2LTQzYzktOTRkNS0zMzM5MGIxY2MwOTk=',
-  attributes: [
-    {
-      attributeDefinitionId:
-        'QXR0cmlidXRlQ2hlY2tib3hEZWZpbml0aW9uXzMxNTBlODcyLTY2OGItNDc1YS05NTRlLWVhYWEzZDMzMWVmNQ==',
-      value: { checkbox: true },
-    },
-  ],
-  contentJSON: {
-    type: 'doc',
-    content: [
-      {
-        type: 'heading',
-        attrs: { level: 2 },
-        content: [{ type: 'text', text: 'Post details' }],
-      },
-      {
-        type: 'paragraph',
-        content: [
-          {
-            type: 'text',
-            text: "Collect lead info for customers who don't complete an online booking.",
-          },
-        ],
-      },
-      {
-        type: 'bulletList',
-        content: [
-          {
-            type: 'listItem',
-            content: [
-              {
-                type: 'paragraph',
-                content: [
-                  {
-                    type: 'text',
-                    marks: [{ type: 'bold' }],
-                    text: 'Category :',
-                  },
-                  { type: 'text', text: 'Online scheduling' },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-      {
-        type: 'heading',
-        attrs: { level: 3 },
-        content: [{ type: 'text', text: 'Comments' }],
-      },
-      {
-        type: 'paragraph',
-        content: [
-          { type: 'text', text: 'From: ' },
-          { type: 'text', marks: [{ type: 'bold' }], text: 'Cade' },
-          { type: 'text', text: ' on 2024-04-30T17:03:15.469Z' },
-        ],
-      },
-      { type: 'paragraph', content: [{ type: 'text', text: '' }] },
-    ],
-  },
+type QueryReadDocWithCustomerByIdResponse = {
+  data: {
+    node: {
+      id: string;
+      title: string;
+      customer: {
+        id: string;
+        name: string;
+        email: string;
+      };
+    };
+  };
+};
+
+export const readDocWithCustomerById = async ({ docId }: { docId: string }) => {
+  const query = `
+    query fetchDoc($docId: ID!) {
+      node(id: $docId) {
+        ... on Doc {
+          id
+          title
+          customer {
+            id
+            email
+            name
+          }
+        }
+      }
+    }
+`;
+  const variables = {
+    docId,
+  };
+  const response = await queryCycle<QueryReadDocWithCustomerByIdResponse>({
+    query,
+    variables,
+  });
+  return response?.data?.node || null;
 };

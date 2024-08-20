@@ -1,5 +1,6 @@
 export * from './attributes';
 export * from './change-log';
+export * from './customers';
 export * from './doc-types';
 export * from './doc';
 export * from './workspace';
@@ -27,4 +28,14 @@ export const formatDateAndTime = (date: Date): [string, string] => {
     date
   );
   return [formattedDate, formattedTime];
+};
+
+/**
+ * Convert format from DD-MM-YYYY to YYYY-MM-DD
+ * @param dateString Expecting format DD-MM-YYYY
+ * @returns Format in YYYY-MM-DD
+ */
+export const formatDate = (dateString: string): string => {
+  const [month, day, year] = dateString.split('-');
+  return `${year}-${month}-${day}`;
 };
