@@ -1,14 +1,33 @@
 import { queryCycle } from './cycle';
 
-type Doc = {
+export type Doc = {
   id: string;
   title: string;
 };
-type DocWithCustomerId = {
-  id: string;
-  title: string;
+export type DocWithCustomer = Doc & {
   customer: {
     id: string;
+    name: string;
+    email: string;
+    company: {
+      id: string;
+      name: string;
+    };
+  };
+};
+
+type DocWithPaginatedChildren = Doc & {
+  children: {
+    count: number;
+    pageInfo: {
+      hasNextPage: boolean;
+      endCursor: string;
+      __typename: string;
+    };
+    edges: {
+      cursor: string;
+      node: Doc;
+    }[];
   };
 };
 
@@ -98,7 +117,7 @@ export const createDoc = async ({
 
 type QueryCreateFeedbackResponse = {
   data: {
-    createFeedback: DocWithCustomerId;
+    createFeedback: DocWithCustomer;
   };
 };
 
@@ -147,6 +166,12 @@ export const createFeedback = async ({
       title
       customer {
         id
+        name
+        email
+        company {
+          id
+          name
+        }
       }
     }
   }
@@ -233,15 +258,7 @@ export const createInsight = async ({
 
 type QueryReadDocWithCustomerByIdResponse = {
   data: {
-    node: {
-      id: string;
-      title: string;
-      customer: {
-        id: string;
-        name: string;
-        email: string;
-      };
-    };
+    node: DocWithCustomer;
   };
 };
 
@@ -256,6 +273,10 @@ export const readDocWithCustomerById = async ({ docId }: { docId: string }) => {
             id
             email
             name
+            company {
+              id
+              name
+            }
           }
         }
       }
@@ -269,4 +290,130 @@ export const readDocWithCustomerById = async ({ docId }: { docId: string }) => {
     variables,
   });
   return response?.data?.node || null;
+};
+
+type QueryReadDocChildrenResponse = {
+  data: {
+    node: DocWithPaginatedChildren;
+  };
+};
+
+export const readDocChildren = async ({
+  docId,
+  childrenDocTypeId,
+  cursor,
+}: {
+  docId: string;
+  childrenDocTypeId?: string;
+  cursor?: string;
+}) => {
+  const query = `
+  query fetchDoc(
+    $docId: ID!
+    $doctypeId: ID!
+    $size: Int!
+    $cursor: String!
+  ) {
+    node(id: $docId) {
+      ... on Doc {
+        id
+        title
+        children(
+          pagination: {
+            size: $size, 
+            where: {
+              cursor: $cursor,
+              direction: AFTER
+            }
+          },
+          doctypeId: $doctypeId
+        ) {
+          count
+          pageInfo {
+            hasNextPage
+            endCursor
+            __typename
+          }
+          edges {
+            cursor
+            node {
+              id
+              title
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+  const variables = {
+    docId,
+    doctypeId: childrenDocTypeId,
+    size: 30,
+    cursor: cursor || '',
+  };
+  const response = await queryCycle<QueryReadDocChildrenResponse>({
+    query,
+    variables,
+  });
+
+  return response?.data?.node || null;
+};
+
+type QueryReadDocWithCustomerByDocTargetResponse = {
+  data: {
+    node: Doc & {
+      docSource: {
+        id: string;
+        doc: DocWithCustomer;
+      };
+    };
+  };
+};
+
+export const readDocWithCustomerByDocTargetId = async ({
+  docId,
+}: {
+  docId: string;
+}) => {
+  const query = `
+    query fetchDoc($docId: ID!) {
+      node(id: $docId) {
+        ... on Doc {
+          id
+          title
+          docSource {
+            id
+            doc {
+              id
+              title
+              customer {
+                id
+                email
+                name
+                company {
+                  id
+                  name
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+`;
+  const variables = {
+    docId,
+  };
+  const response =
+    await queryCycle<QueryReadDocWithCustomerByDocTargetResponse>({
+      query,
+      variables,
+    });
+  return response?.data?.node || null;
+};
+
+const a = {
+  type: 'doc',
+  content: [{ type: 'paragraph', content: [{ type: 'text', text: 'test' }] }],
 };

@@ -7,6 +7,7 @@
     "import:canny": "ts-node src/examples/import-canny/index.ts",
     "import:gong": "ts-node src/examples/import-gong/index.ts",
     "releases:create": "ts-node src/examples/create-releases/index.ts",
+    "releases:export-customers": "ts-node src/examples/read-release-customers/index.ts",
     "releases:read": "ts-node src/examples/read-releases/index.ts"
   },
   "author": "Kevin Tassi <kevin@cycle.app>",
@@ -14,6 +15,7 @@
   "devDependencies": {
     "@types/node": "20.14.9",
     "csv-parser": "^3.0.0",
+    "csv-writer": "^1.6.0",
     "puppeteer": "^23.0.1",
     "ts-node": "10.9.2",
     "typescript": "5.5.2"

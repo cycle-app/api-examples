@@ -1,8 +1,12 @@
+import { createObjectCsvWriter } from 'csv-writer';
+
 export * from './attributes';
 export * from './change-log';
+export * from './companies';
 export * from './customers';
 export * from './doc-types';
 export * from './doc';
+export * from './releases';
 export * from './workspace';
 
 export const wait = (milliseconds: number = 1000) =>
@@ -38,4 +42,17 @@ export const formatDateAndTime = (date: Date): [string, string] => {
 export const formatDate = (dateString: string): string => {
   const [month, day, year] = dateString.split('-');
   return `${year}-${month}-${day}`;
+};
+
+export const generateCSV = async (
+  filePath: string,
+  data: any[],
+  headers: { id: string; title: string }[]
+) => {
+  const csvWriter = createObjectCsvWriter({
+    path: filePath,
+    header: headers,
+  });
+
+  await csvWriter.writeRecords(data);
 };
