@@ -19,4 +19,4 @@ Cycle allows you to manage and publish a public changelog for your workspace, sh
    npm run releases:export-customers
    ```
 
-3. The script will generate two CSV files in the current directory under the `output` folder, containing all the fetched data.
+3. The script will generate CSV files in the current directory under the `output` folder, containing all the fetched data.
