@@ -86,5 +86,5 @@ export const linkAttributeToDocType = async ({
     query,
     variables,
   });
-  return response?.data?.addAttributeDefinitionDoctypeV2?.id;
+  return response?.data?.addAttributeDefinitionDoctypeV2?.id || null;
 };

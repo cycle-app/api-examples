@@ -46,13 +46,13 @@ export const formatDate = (dateString: string): string => {
 
 export const generateCSV = async (
   filePath: string,
-  data: any[],
-  headers: { id: string; title: string }[]
+  headers: { id: string; title: string }[],
+  append?: boolean
 ) => {
   const csvWriter = createObjectCsvWriter({
     path: filePath,
     header: headers,
+    append: append,
   });
-
-  await csvWriter.writeRecords(data);
+  return csvWriter;
 };

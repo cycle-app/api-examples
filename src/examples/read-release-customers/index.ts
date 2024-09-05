@@ -4,14 +4,11 @@ import {
   fetchWorkspaceDocTypes,
   fetchWorkspaceId,
   generateCSV,
-  readDocChildren,
-  readDocWithCustomerByDocTargetId,
-  type Doc,
-  // type DocWithCustomer,
+  readDocChildrenWithSource,
+  type DocWithSourceDoc,
   type Release,
   type ReleaseNoteWithDoc,
   wait,
-  type DocWithCustomer,
 } from '../../utils';
 import { slug } from '../../config';
 
@@ -29,6 +26,7 @@ const fetchAllReleases = async (workspaceId: string): Promise<Release[]> => {
   let allReleases: Release[] = [];
   let cursor: string | undefined = '';
   let hasNextPage = true;
+  let page = 0;
 
   while (hasNextPage) {
     const response = await fetchReleases({ workspaceId, cursor });
@@ -38,6 +36,8 @@ const fetchAllReleases = async (workspaceId: string): Promise<Release[]> => {
     allReleases = [...allReleases, ...releases];
     hasNextPage = response?.node.releases.pageInfo.hasNextPage || false;
     cursor = response?.node.releases.pageInfo.endCursor;
+    page += 1;
+    console.info(`ℹ️ Page ${page} - Releases found: ${allReleases.length}`);
   }
 
   return allReleases;
@@ -47,15 +47,20 @@ const fetchAllReleaseNotesByRelease = async (releaseId: string) => {
   let allReleaseNotes: ReleaseNoteWithDoc[] = [];
   let cursor: string | undefined = '';
   let hasNextPage = true;
+  let page = 0;
 
   while (hasNextPage) {
     const response = await fetchReleaseNotes({ releaseId, cursor });
     const releaseNotes =
-      response.release.releaseNotes.edges.map((edge) => edge.node) || [];
+      response?.release.releaseNotes.edges.map((edge) => edge.node) || [];
 
     allReleaseNotes = [...allReleaseNotes, ...releaseNotes];
     hasNextPage = response?.release.releaseNotes.pageInfo.hasNextPage || false;
     cursor = response?.release.releaseNotes.pageInfo.endCursor;
+    page += 1;
+    console.info(
+      `ℹ️ Page ${page} - Release notes found: ${allReleaseNotes.length}`
+    );
   }
 
   return allReleaseNotes;
@@ -65,20 +70,23 @@ const fetchAllChildren = async (
   releaseDocId: string,
   insightDocTypeId: string
 ) => {
-  let allChildren: Doc[] = [];
+  let allChildren: DocWithSourceDoc[] = [];
   let cursor: string | undefined = '';
   let hasNextPage = true;
+  let page = 0;
 
   while (hasNextPage) {
-    const childrenResult = await readDocChildren({
+    const childrenResult = await readDocChildrenWithSource({
       docId: releaseDocId,
       childrenDocTypeId: insightDocTypeId,
     });
     const children =
-      childrenResult.children.edges.map((edge) => edge.node) || [];
+      childrenResult?.children.edges.map((edge) => edge.node) || [];
     allChildren = [...allChildren, ...children];
-    hasNextPage = childrenResult.children.pageInfo.hasNextPage || false;
-    cursor = childrenResult.children.pageInfo.endCursor;
+    hasNextPage = childrenResult?.children.pageInfo.hasNextPage || false;
+    cursor = childrenResult?.children.pageInfo.endCursor;
+    page += 1;
+    console.info(`ℹ️ Page ${page} - Children found: ${allChildren.length}`);
   }
 
   return allChildren;
@@ -99,184 +107,197 @@ async function main() {
   }
   console.info(`ℹ️ Doc types found`);
 
+  const state: {
+    [releaseId: string]: {
+      data: Release;
+      notes: {
+        [releaseNoteId: string]: {
+          data: ReleaseNoteWithDoc;
+          insights: {
+            [insightId: string]: {
+              data: DocWithSourceDoc;
+            };
+          };
+        };
+      };
+    };
+  } = {};
+
   /**
    * Fetch all releases for the workspace
    */
   const releasesResults = await fetchAllReleases(workspaceId);
-  // Exclude the "No release" release (the only one without a date)
-  const releases = releasesResults.filter((r) => !!r.date);
-  console.info(`ℹ️ Releases found: ${releases.length}`);
+  releasesResults.forEach((release) => {
+    if (release.date) {
+      state[release.id] = {
+        data: release,
+        notes: {},
+      };
+    }
+  });
+  console.info(`ℹ️ Releases found: ${Object.keys(state).length}`);
 
   /**
    * For each release, fetch all release notes with the associated doc
    */
-  const releaseNotesTotal = [];
-  const releaseNotesByRelease: { [key: string]: ReleaseNoteWithDoc[] } = {};
-  for (const release of releases) {
+  let releaseNotesTotal = 0;
+  for (const releaseData of Object.values(state)) {
     await wait(500);
     const releaseNodeWithDocResult = await fetchAllReleaseNotesByRelease(
-      release.id
+      releaseData.data.id
     );
-    releaseNotesTotal.push(...releaseNodeWithDocResult);
-    if (releaseNotesByRelease[release.id]) {
-      releaseNotesByRelease[release.id].push(...releaseNodeWithDocResult);
-    } else {
-      releaseNotesByRelease[release.id] = releaseNodeWithDocResult;
-    }
+    state[releaseData.data.id].notes = releaseNodeWithDocResult.reduce(
+      (acc, releaseNote) => {
+        return {
+          ...acc,
+          [releaseNote.id]: {
+            data: releaseNote,
+            insights: [],
+          },
+        };
+      },
+      {}
+    );
+    releaseNotesTotal += releaseNodeWithDocResult.length;
   }
-  console.info(`ℹ️ Release notes found: ${releaseNotesTotal.length}`);
+  console.info(`ℹ️ Release notes found: ${releaseNotesTotal}`);
 
   /**
    * For each release note, fetch all insights and their associated customers
    */
-  const insights = [];
-  const insightsByReleaseNote: { [releaseNoteId: string]: Doc[] } = {};
-  for (const releaseNote of releaseNotesTotal) {
-    await wait(500);
-    const children = await fetchAllChildren(
-      releaseNote.doc.id,
-      docTypes.insight.id
-    );
-    insights.push(...children);
-    insightsByReleaseNote[releaseNote.id] = children;
+  let insightsTotal = 0;
+  for (const releaseData of Object.values(state)) {
+    for (const releaseNoteData of Object.values(releaseData.notes)) {
+      await wait(500);
+      const children = await fetchAllChildren(
+        releaseNoteData.data.doc.id,
+        docTypes.insight.id
+      );
+      for (const child of children) {
+        state[releaseData.data.id].notes[releaseNoteData.data.id].insights[
+          child.id
+        ] = { data: child };
+      }
+      insightsTotal += children.length;
+    }
   }
-
-  /**
-   * For each insight, fetch feedback linked who contain the customer and we
-   * put them together
-   */
-  const feedbacksWithInsights: {
-    insight: Doc;
-    feedback: DocWithCustomer;
-  }[] = [];
-  for (const insight of insights) {
-    await wait(500);
-    const doc = await readDocWithCustomerByDocTargetId({
-      docId: insight.id,
-    });
-    feedbacksWithInsights.push({ insight, feedback: doc.docSource.doc });
-  }
-  console.info(`ℹ️ Feedbacks found: ${feedbacksWithInsights.length}`);
+  console.info(`ℹ️ Insights found: ${insightsTotal}`);
 
   /**
    * Generate a CSV with all the data
    */
-  const data: {
-    releaseId: string;
-    releaseDate: string;
-    releaseTitle: string;
-    releaseNoteId: string;
-    releaseNoteTitle: string;
-    nbQuotes: string;
-    nbFeedback: string;
-    nbCustomer: string;
-    nbCompany: string;
-  }[] = [];
+  const globalStatsCSV = await generateCSV(
+    './src/examples/read-release-customers/output/global_stats.csv',
+    [
+      { id: 'keyId', title: '' },
+      { id: 'amount', title: 'Amount' },
+    ],
+    true
+  );
+  await globalStatsCSV.writeRecords([
+    { keyId: '', amount: 'Amount' },
+    { keyId: 'Releases', amount: Object.keys(state).length },
+    { keyId: 'Release Notes', amount: releaseNotesTotal },
+    { keyId: 'Insights Amount', amount: insightsTotal },
+  ]);
 
-  releases.forEach((release) => {
-    const releaseId = release.id;
-    const releaseDate = release.date;
-    const releaseTitle = release.title;
-    const releaseNotes = releaseNotesByRelease[releaseId];
+  const byReleaseStatsCSV = await generateCSV(
+    './src/examples/read-release-customers/output/by_releases_stats.csv',
+    [
+      { id: 'releaseId', title: 'ReleaseId' },
+      { id: 'releaseDate', title: 'Date' },
+      { id: 'releaseTitle', title: 'Title' },
+      { id: 'releaseNotesAmount', title: 'Release Notes Amount' },
+      { id: 'insightsAmount', title: 'Insights Amount' },
+      { id: 'uniqueCustomerAmount', title: 'Unique Customers Amount' },
+      { id: 'uniqueCompaniesAmount', title: 'Unique Companies Amount' },
+    ],
+    true
+  );
+  await byReleaseStatsCSV.writeRecords([
+    {
+      releaseId: 'Release ID',
+      releaseDate: 'Release Date',
+      releaseTitle: 'Release Title',
+      releaseNotesAmount: 'Release Notes Amount',
+      insightsAmount: 'Insights Amount',
+      uniqueCustomerAmount: 'Unique Customers Amount',
+      uniqueCompaniesAmount: 'Unique Companies Amount',
+    },
+  ]);
 
-    releaseNotes.forEach((releaseNote) => {
-      const insights = insightsByReleaseNote[releaseNote.id];
-      const feedbacks = insights.map((insight) => {
-        return feedbacksWithInsights.find(
-          (item) => item.insight.id === insight.id
+  const byReleaseNotesStatsCSV = await generateCSV(
+    './src/examples/read-release-customers/output/by_release_notes_stats.csv',
+    [
+      { id: 'releaseId', title: 'ReleaseId' },
+      { id: 'releaseDate', title: 'ReleaseDate' },
+      { id: 'releaseNoteId', title: 'ReleaseNoteId' },
+      { id: 'releaseNoteTitle', title: 'Title' },
+      { id: 'insightsAmount', title: 'Insights Amount' },
+      { id: 'uniqueCustomerAmount', title: 'Unique Customers Amount' },
+      { id: 'uniqueCompaniesAmount', title: 'Unique Companies Amount' },
+    ],
+    true
+  );
+  await byReleaseNotesStatsCSV.writeRecords([
+    {
+      releaseId: 'Release ID',
+      releaseDate: 'Release Date',
+      releaseNoteId: 'Release Note ID',
+      releaseNoteTitle: 'Release Note Title',
+      insightsAmount: 'Insights Amount',
+      uniqueCustomerAmount: 'Unique Customers Amount',
+      uniqueCompaniesAmount: 'Unique Companies Amount',
+    },
+  ]);
+
+  Object.values(state).forEach(async (releaseData) => {
+    let insightsAmount = 0;
+    const customers = new Set<string>();
+    const companies = new Set<string>();
+
+    Object.values(releaseData.notes).forEach(async (releaseNoteData) => {
+      const customersByReleaseNote = new Set<string>();
+      const companiesByReleaseNote = new Set<string>();
+      Object.values(releaseNoteData.insights).forEach(async (insightData) => {
+        insightsAmount += 1;
+        customers.add(insightData.data.docSource?.doc?.customer?.id || '');
+        customersByReleaseNote.add(
+          insightData.data.docSource?.doc?.customer?.id || ''
+        );
+        companies.add(
+          insightData.data.docSource?.doc?.customer?.company?.id || ''
+        );
+        companiesByReleaseNote.add(
+          insightData.data.docSource?.doc?.customer?.company?.id || ''
         );
       });
 
-      const uniqueCustomers = new Set(
-        feedbacks.map((item) => item?.feedback.customer?.id || '')
-      );
-      const uniqueCompanies = new Set(
-        feedbacks.map((item) => item?.feedback.customer.company?.id || '')
-      );
-
-      data.push({
-        releaseId,
-        releaseDate,
-        releaseTitle,
-        releaseNoteId: releaseNote.id,
-        releaseNoteTitle: releaseNote.title,
-        nbQuotes: insights.length.toString(),
-        nbFeedback: feedbacks.length.toString(),
-        nbCustomer: uniqueCustomers.size.toString(),
-        nbCompany: uniqueCompanies.size.toString(),
-      });
+      await byReleaseNotesStatsCSV.writeRecords([
+        {
+          releaseId: releaseData.data.id,
+          releaseDate: releaseData.data.date,
+          releaseNoteId: releaseNoteData.data.id,
+          releaseNoteTitle: releaseNoteData.data.title,
+          insightsAmount: Object.keys(releaseNoteData.insights).length,
+          uniqueCustomerAmount: customersByReleaseNote.size,
+          uniqueCompaniesAmount: companiesByReleaseNote.size,
+        },
+      ]);
     });
+
+    await byReleaseStatsCSV.writeRecords([
+      {
+        releaseId: releaseData.data.id,
+        releaseDate: releaseData.data.date,
+        releaseTitle: releaseData.data.title,
+        releaseNotesAmount: Object.keys(releaseData.notes).length,
+        insightsAmount,
+        uniqueCustomerAmount: customers.size,
+        uniqueCompaniesAmount: companies.size,
+      },
+    ]);
   });
-
-  await generateCSV(
-    './src/examples/read-release-customers/output/test.csv',
-    data,
-    [
-      { id: 'releaseId', title: 'Release ID' },
-      { id: 'releaseDate', title: 'Release Date' },
-      { id: 'releaseTitle', title: 'Release Title' },
-      { id: 'releaseNoteId', title: 'Release Note ID' },
-      { id: 'releaseNoteTitle', title: 'Release Note Title' },
-      { id: 'nbQuotes', title: 'Quote amount' },
-      { id: 'nbFeedback', title: 'Feedback amount' },
-      { id: 'nbCustomer', title: 'Customer amount' },
-      { id: 'nbCompany', title: 'Company amount' },
-    ]
-  );
-
-  const data2: { key: string; value: string }[] = [];
-
-  releases.forEach((release) => {
-    const releaseId = release.id;
-    const releaseDate = release.date;
-    const releaseTitle = release.title || 'Untitled Release';
-    const releaseNotes = releaseNotesByRelease[releaseId];
-
-    releaseNotes.forEach((releaseNote) => {
-      const insights = insightsByReleaseNote[releaseNote.id];
-      const feedbacks = insights.map((insight) => {
-        return feedbacksWithInsights.find(
-          (item) => item.insight.id === insight.id
-        );
-      });
-
-      const uniqueCustomers = new Set(
-        feedbacks.map((item) => item?.feedback.customer?.id || '')
-      );
-      const uniqueCompanies = new Set(
-        feedbacks.map((item) => item?.feedback.customer.company?.id || '')
-      );
-
-      // Push each field as a separate entry into the data array
-      data2.push({ key: 'Release ID', value: releaseId });
-      data2.push({ key: 'Release Date', value: releaseDate });
-      data2.push({ key: 'Release Title', value: releaseTitle });
-      data2.push({ key: 'Release Note ID', value: releaseNote.id });
-      data2.push({ key: 'Release Note Title', value: releaseNote.title });
-      data2.push({ key: 'Quote amount', value: insights.length.toString() });
-      data2.push({
-        key: 'Feedback amount',
-        value: feedbacks.length.toString(),
-      });
-      data2.push({
-        key: 'Customer amount',
-        value: uniqueCustomers.size.toString(),
-      });
-      data2.push({
-        key: 'Company amount',
-        value: uniqueCompanies.size.toString(),
-      });
-    });
-  });
-
-  await generateCSV(
-    './src/examples/read-release-customers/output/test2.csv',
-    data2,
-    [
-      { id: 'key', title: 'Key' },
-      { id: 'value', title: 'Value' },
-    ]
-  );
 
   console.info(`✅ Done`);
 }
@@ -285,4 +306,5 @@ try {
   main();
 } catch (error: any) {
   console.error('Error in main', error.message);
+  process.exit();
 }

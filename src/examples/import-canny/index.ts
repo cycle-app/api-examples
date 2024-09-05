@@ -358,8 +358,8 @@ const main = async () => {
                   title: `Vote from ${vote.voter?.name || 'unknown'} on ${
                     post.title
                   }`,
-                  customerId: voteFeedback.customer.id,
-                  docSourceId: voteFeedback.id,
+                  customerId: voteFeedback?.customer.id,
+                  docSourceId: voteFeedback?.id,
                   parentId: createdDoc.id,
                 });
               }

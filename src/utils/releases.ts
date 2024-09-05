@@ -196,7 +196,7 @@ export const fetchReleaseNotes = async ({
     variables,
   });
 
-  return response.data || null;
+  return response?.data || null;
 };
 
 type QueryReleaseCreateResponse = {

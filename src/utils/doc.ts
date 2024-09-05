@@ -15,8 +15,14 @@ export type DocWithCustomer = Doc & {
     };
   };
 };
+export type DocWithSourceDoc = Doc & {
+  docSource: {
+    id: string;
+    doc: DocWithCustomer;
+  };
+};
 
-type DocWithPaginatedChildren = Doc & {
+export type DocWithPaginatedChildren = Doc & {
   children: {
     count: number;
     pageInfo: {
@@ -26,7 +32,7 @@ type DocWithPaginatedChildren = Doc & {
     };
     edges: {
       cursor: string;
-      node: Doc;
+      node: DocWithSourceDoc;
     }[];
   };
 };
@@ -253,7 +259,7 @@ export const createInsight = async ({
     query,
     variables,
   });
-  return response.data.createFeedback.id;
+  return response?.data.createFeedback.id;
 };
 
 type QueryReadDocWithCustomerByIdResponse = {
@@ -298,7 +304,7 @@ type QueryReadDocChildrenResponse = {
   };
 };
 
-export const readDocChildren = async ({
+export const readDocChildrenWithSource = async ({
   docId,
   childrenDocTypeId,
   cursor,
@@ -339,6 +345,22 @@ export const readDocChildren = async ({
             node {
               id
               title
+              docSource {
+                id
+                doc {
+                  id
+                  title
+                  customer {
+                    id
+                    email
+                    name
+                    company {
+                      id
+                      name
+                    }
+                  }
+                }
+              }
             }
           }
         }

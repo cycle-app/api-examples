@@ -320,7 +320,7 @@ export const updateCompany = async ({
   });
   // console.log('++', response);
   if (
-    response.data &&
+    response?.data &&
     'updateCompany' in response.data &&
     response.data.updateCompany
   ) {
