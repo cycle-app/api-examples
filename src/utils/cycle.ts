@@ -29,16 +29,19 @@ export const queryCycle = async <T>({
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error fetching Cycle:', errorText);
-        if (attempt >= MAX_RETRIES) return null;
+        if (attempt >= MAX_RETRIES) {
+          const errorText = await response.text();
+          throw Error(errorText);
+        } else {
+          console.error('❌ Error fetching Cycle, trying again…');
+        }
       } else {
         const responseData = await response.json();
         return responseData;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Attempt ${attempt} failed due to error:`, error);
-      if (attempt >= MAX_RETRIES) return null;
+      if (attempt >= MAX_RETRIES) throw Error(error.message);
     }
     await delay(1000);
   }
