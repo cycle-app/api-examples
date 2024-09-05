@@ -312,13 +312,10 @@ export const updateCompany = async ({
     companyId,
     ...data,
   };
-  // console.log('query', query);
-  // console.log('variable', variables);
   const response = await queryCycle<QueryUpdateCompanyResponse>({
     query,
     variables,
   });
-  // console.log('++', response);
   if (
     response?.data &&
     'updateCompany' in response.data &&
