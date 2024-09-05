@@ -31,7 +31,7 @@ export const queryCycle = async <T>({
       if (!response.ok) {
         if (attempt >= MAX_RETRIES) {
           const errorText = await response.text();
-          throw Error(errorText);
+          throw new Error(errorText);
         } else {
           console.error('❌ Error fetching Cycle, trying again…');
         }
