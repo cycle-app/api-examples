@@ -11,6 +11,7 @@ import {
   wait,
 } from '../../utils';
 import { slug } from '../../config';
+import { State } from './index.types';
 
 const fetchDocTypes = async (workspaceId: string) => {
   const docTypes = await fetchWorkspaceDocTypes({
@@ -107,21 +108,7 @@ async function main() {
   }
   console.info(`ℹ️ Doc types found`);
 
-  const state: {
-    [releaseId: string]: {
-      data: Release;
-      notes: {
-        [releaseNoteId: string]: {
-          data: ReleaseNoteWithDoc;
-          insights: {
-            [insightId: string]: {
-              data: DocWithSourceDoc;
-            };
-          };
-        };
-      };
-    };
-  } = {};
+  const state: State = {};
 
   /**
    * Fetch all releases for the workspace
