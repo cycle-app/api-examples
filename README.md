@@ -32,9 +32,15 @@ Before you begin, ensure you have the following installed on your machine:
    cd api-examples
    ```
 
-2. Fill the config file at `./src/config.ts` with your data
+2. Install dependencies
 
-3. Check the README from the example you want to use
+   ```bash
+   npm install
+   ```
+
+3. Fill the config file at `./src/config.ts` with your data
+
+4. Check the README from the example you want to use
 
 ## Examples
 

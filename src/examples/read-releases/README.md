@@ -16,5 +16,4 @@ In this example, you will see who retrieve those in a fully public way, so no ne
 ## How to use the script
 
 1. Fill your data in `./config.ts` your can omit the `token` since it won't be necessary.
-
 2. run `npm run releases:read`
