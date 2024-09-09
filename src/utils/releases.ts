@@ -199,6 +199,54 @@ export const fetchReleaseNotes = async ({
   return response?.data || null;
 };
 
+type FetchReleaseNoteResponse = {
+  data: {
+    releaseNote: {
+      id: string;
+      title: string;
+      htmlContent: string;
+      cover: {
+        url: string;
+      };
+      release: {
+        id: string;
+      };
+    };
+  };
+};
+
+export const fetchReleaseNoteById = async (releaseNoteId: string) => {
+  const query = `
+    query getReleaseNotes(
+      $releaseNoteId: ID!
+    ) {
+      releaseNote: node(id: $releaseNoteId) {
+        ... on ReleaseNote {
+          id
+          title
+          htmlContent
+          cover {
+            url
+          }
+          release {
+            id
+          }
+        }
+      }
+    }
+  `;
+
+  const variables = {
+    releaseNoteId,
+  };
+  const response = await queryCycle<FetchReleaseNoteResponse>({
+    query,
+    variables,
+  });
+
+  return response?.data || null;
+};
+
 type QueryReleaseCreateResponse = {
   data: {
     createRelease: {
@@ -298,3 +346,20 @@ export const createReleaseNote = async ({
   });
   return response;
 };
+
+/**
+ * Function to build a URL for a release note in Cycle app
+ * An url is made of:
+ * - Domain: https://product.cycle.app/app/[workspace-slug]/
+ * - Path: releases/[release-id]/notes/[release-note-id]
+ */
+export const getReleaseNoteUrl = ({
+  slug,
+  releaseId,
+  releaseNoteId,
+}: {
+  slug: string;
+  releaseId: string;
+  releaseNoteId: string;
+}) =>
+  `https://product.cycle.app/app/${slug}/releases/${releaseId}/notes/${releaseNoteId}`;

@@ -1,6 +1,6 @@
 import { queryCycle } from './cycle';
 
-type DocType = {
+export type DocType = {
   id: string;
   name: string;
 };

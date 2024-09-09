@@ -58,3 +58,59 @@ export const createAttribute = async ({
   });
   return response?.data?.addNewAttribute || null;
 };
+
+type QueryFetchCheckboxAttributesResponse = {
+  data: {
+    node: {
+      id: string;
+      attributeDefinitions: {
+        edges: {
+          node: {
+            __typename: string;
+            id: string;
+            name: string;
+          };
+        }[];
+      };
+    };
+  };
+};
+
+export const fetchCheckboxAttributes = async ({
+  workspaceId,
+}: {
+  workspaceId: string;
+}) => {
+  const query = `
+    query readAttributes(
+      $productId: ID!
+    ) {
+      node(id: $productId) {
+        ... on Product {
+          id
+          attributeDefinitions {
+            edges {
+              node {
+                __typename
+                ... on AttributeCheckboxDefinition {
+                  id
+                  name
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
+  const variables = {
+    productId: workspaceId,
+  };
+
+  const response = await queryCycle<QueryFetchCheckboxAttributesResponse>({
+    query,
+    variables,
+  });
+
+  return response?.data?.node || null;
+};

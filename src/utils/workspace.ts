@@ -23,3 +23,113 @@ export const fetchWorkspaceId = async ({ slug }: { slug: string }) => {
   });
   return response?.data?.getProductBySlug?.id || null;
 };
+
+type QueryWorkspaceStatusesResponse = {
+  data: {
+    getProductStatuses: {
+      id: string;
+      status: {
+        __typename: string;
+        completed: {
+          __typename: string;
+          edges: {
+            node: {
+              __typename: string;
+              id: string;
+              value: string;
+            };
+          }[];
+        };
+        notStarted: {
+          __typename: string;
+          edges: {
+            node: {
+              __typename: string;
+              id: string;
+              value: string;
+            };
+          }[];
+        };
+        started: {
+          __typename: string;
+          edges: {
+            node: {
+              __typename: string;
+              id: string;
+              value: string;
+            };
+          }[];
+        };
+        canceled: {
+          __typename: string;
+          edges: {
+            node: {
+              __typename: string;
+              id: string;
+              value: string;
+            };
+          }[];
+        };
+      };
+    };
+  };
+};
+
+export const fetchWorkspaceStatuses = async ({ slug }: { slug: string }) => {
+  const query = `
+    query workspaceStatus($slug: DefaultString!) {
+      getProductStatuses(slug: $slug) {
+        id
+        status {
+          __typename
+          completed: values(category: COMPLETED, pagination: {size: 50}) {
+            __typename
+            edges {
+              node {
+                __typename
+                id
+                value
+              }
+            }
+          }
+          notStarted: values(category: NOT_STARTED, pagination: {size: 50}) {
+            __typename
+            edges {
+              node {
+                __typename
+                id
+                value
+              }
+            }
+          }
+          started: values(category: STARTED, pagination: {size: 50}) {
+            __typename
+            edges {
+              node {
+                __typename
+                id
+                value
+              }
+            }
+          }
+          canceled: values(category: CANCELED, pagination: {size: 50}) {
+            __typename
+            edges {
+              node {
+                __typename
+                id
+                value
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
+  const variables = { slug };
+  const response = await queryCycle<QueryWorkspaceStatusesResponse>({
+    query,
+    variables,
+  });
+  return response?.data.getProductStatuses || null;
+};
