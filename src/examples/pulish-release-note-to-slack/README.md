@@ -4,12 +4,18 @@ A very common use case is to communicate about something you released. Using
 Cycle releases, you can create a release and publish on you change-log some
 content about your release.
 
-This script will show you how to do it based on specific actions
-
 ## What does this script do?
+
+### Manual trigger
 
 - Based on a release note, grab the public content
 - Publish the content on a specific Slack channel
+
+### Webhook simulation
+
+- Based on a simulated payload from the `STATUS_CHANGE` Cycle webhook
+- Fetch the needed data from API
+- Show optional filter based on properties
 
 ## How to use the script
 
