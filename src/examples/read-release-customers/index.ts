@@ -156,10 +156,13 @@ async function main() {
   for (const releaseData of Object.values(state)) {
     for (const releaseNoteData of Object.values(releaseData.notes)) {
       await wait(500);
-      const children = await fetchAllChildren(
-        releaseNoteData.data.doc.id,
-        docTypes.insight.id
-      );
+      let children: DocWithSourceDoc[] = [];
+      if (releaseNoteData.data?.doc?.id) {
+        children = await fetchAllChildren(
+          releaseNoteData.data.doc.id,
+          docTypes.insight.id
+        );
+      }
       for (const child of children) {
         state[releaseData.data.id].notes[releaseNoteData.data.id].insights[
           child.id
