@@ -37,6 +37,30 @@ export type DocWithPaginatedChildren = Doc & {
   };
 };
 
+type DocWithAttributes = Doc & {
+  attributes: {
+    edges: {
+      node: {
+        __typename: string;
+        id: string;
+        name: string;
+        definition: {
+          id: string;
+          name: string;
+        };
+        checkboxValue?: {
+          id: string;
+          value: boolean;
+        };
+        singleSelectValue?: {
+          id: string;
+          value: string;
+        };
+      };
+    }[];
+  };
+};
+
 type QueryCreateDocResponse = {
   data: {
     addNewDoc: Doc;
@@ -438,4 +462,64 @@ export const readDocWithCustomerByDocTargetId = async ({
 const a = {
   type: 'doc',
   content: [{ type: 'paragraph', content: [{ type: 'text', text: 'test' }] }],
+};
+
+type QueryReadDocWithAttributesByIdResponse = {
+  data: {
+    node: DocWithAttributes;
+  };
+};
+
+export const readDocWithAttributesById = async ({
+  docId,
+}: {
+  docId: string;
+}) => {
+  const query = `
+    query fetchDoc($docId: ID!) {
+      node(id: $docId) {
+        ... on Doc {
+          id
+          title
+          attributes {
+            edges {
+              node {
+                __typename
+                ... on DocAttributeCheckbox {
+                  id
+                  checkboxValue: value {
+                    id
+                    value
+                  }
+                  definition {
+                    id
+                    name
+                  }
+                }
+                ... on DocAttributeSingleSelect {
+                  id
+                  singleSelectValue: value {
+                    id
+                    value
+                  }
+                  definition {
+                    id
+                    name
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+`;
+  const variables = {
+    docId,
+  };
+  const response = await queryCycle<QueryReadDocWithAttributesByIdResponse>({
+    query,
+    variables,
+  });
+  return response?.data?.node || null;
 };
