@@ -6,6 +6,7 @@
   "scripts": {
     "import:canny": "ts-node src/examples/import-canny/index.ts",
     "import:gong": "ts-node src/examples/import-gong/index.ts",
+    "import:hubspot-customer-attributes": "ts-node src/examples/import-hubspot-customers-attributes/index.ts",
     "publish:release-to-slack": "ts-node src/examples/pulish-release-note-to-slack/manual-trigger.ts",
     "releases:create": "ts-node src/examples/create-releases/index.ts",
     "releases:export-customers": "ts-node src/examples/read-release-customers/index.ts",
@@ -14,6 +15,7 @@
   "author": "Kevin Tassi <kevin@cycle.app>",
   "license": "ISC",
   "devDependencies": {
+    "@hubspot/api-client": "^11.2.0",
     "@slack/web-api": "^7.3.4",
     "@types/node": "20.14.9",
     "@types/turndown": "^5.0.5",
