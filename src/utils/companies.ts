@@ -1,5 +1,70 @@
 import { queryCycle } from './cycle';
 
+export type Company = {
+  id: string;
+  name: string;
+};
+
+export type CompanyWithAttributes = Company & {
+  arr: number;
+  numberOfEmployees: number;
+  zendeskId: string;
+  hubspotId: string;
+  intercomId: string;
+  pipedriveId: string;
+  snowflakeId: string;
+  customId: string;
+  attributes: {
+    edges: {
+      node:
+        | {
+            id: string;
+            definition: {
+              id: string;
+              __typename: string;
+            };
+            value: {
+              id: string;
+              valueNumber: number | null;
+            };
+          }
+        | {
+            id: string;
+            definition: {
+              id: string;
+              __typename: string;
+            };
+            value: {
+              id: string;
+              valueSelect: string | null;
+            };
+          }
+        | {
+            id: string;
+            definition: {
+              id: string;
+              __typename: string;
+            };
+            value: {
+              id: string;
+              valueCheckbox: boolean | null;
+            };
+          }
+        | {
+            id: string;
+            definition: {
+              id: string;
+              __typename: string;
+            };
+            value: {
+              id: string;
+              valueText: string | null;
+            };
+          };
+    }[];
+  };
+};
+
 type QueryGetCompaniesResponse = {
   data:
     | {
@@ -12,70 +77,7 @@ type QueryGetCompaniesResponse = {
               __typename: string;
             };
             edges: {
-              node: {
-                id: string;
-                name: string;
-                domain: string;
-                isDefault: boolean;
-                logo: string | null;
-                arr: number | null;
-                numberOfEmployees: number | null;
-                zendeskId: string | null;
-                hubspotId: string | null;
-                intercomId: string | null;
-                pipedriveId: string | null;
-                snowflakeId: string | null;
-                customId: string | null;
-                attributes: {
-                  edges: {
-                    node:
-                      | {
-                          id: string;
-                          definition: {
-                            id: string;
-                            __typename: string;
-                          };
-                          value: {
-                            id: string;
-                            valueNumber: number | null;
-                          };
-                        }
-                      | {
-                          id: string;
-                          definition: {
-                            id: string;
-                            __typename: string;
-                          };
-                          value: {
-                            id: string;
-                            valueSelect: string | null;
-                          };
-                        }
-                      | {
-                          id: string;
-                          definition: {
-                            id: string;
-                            __typename: string;
-                          };
-                          value: {
-                            id: string;
-                            valueCheckbox: boolean | null;
-                          };
-                        }
-                      | {
-                          id: string;
-                          definition: {
-                            id: string;
-                            __typename: string;
-                          };
-                          value: {
-                            id: string;
-                            valueText: string | null;
-                          };
-                        };
-                  }[];
-                };
-              };
+              node: CompanyWithAttributes;
             }[];
           };
         };
@@ -90,9 +92,11 @@ type QueryGetCompaniesResponse = {
 export const getCompanies = async ({
   workspaceId,
   cursor = '',
+  size = 50,
 }: {
   workspaceId: string;
   cursor?: string;
+  size?: number;
 }) => {
   const query = `
     query getCompanies(
@@ -188,7 +192,7 @@ export const getCompanies = async ({
   const variables = {
     productId: workspaceId,
     searchText: '',
-    size: 500,
+    size,
     cursor,
   };
   const response = await queryCycle<QueryGetCompaniesResponse>({
@@ -332,4 +336,46 @@ export const updateCompany = async ({
     };
   }
   // return response.data?.updateCompany || null;
+};
+
+type MutationUpdateCompanyArrResponse = {
+  data: {
+    updateCompany: {
+      id: string;
+      arr: number;
+    };
+  };
+};
+
+export const updateCompanyArr = async ({
+  companyId,
+  arr,
+}: {
+  companyId: string;
+  arr: number;
+}) => {
+  const query = `
+  mutation getCompanies(
+    $companyId: ID!,
+    $arr: Float,
+  ) {
+    updateCompany(
+      id: $companyId,
+      arr: $arr
+    ) {
+      id
+      arr
+    }
+  }
+`;
+  const variables = {
+    companyId,
+    arr,
+  };
+  const response = await queryCycle<MutationUpdateCompanyArrResponse>({
+    query,
+    variables,
+  });
+
+  return response?.data?.updateCompany || null;
 };

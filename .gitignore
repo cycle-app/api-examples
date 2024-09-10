@@ -61,3 +61,4 @@ node_modules
 
 # Outputs
 /src/examples/read-release-customers/output/*.csv
+/src/examples/import-hubspot-customers-attributes/output/*.txt
