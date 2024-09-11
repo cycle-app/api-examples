@@ -459,11 +459,6 @@ export const readDocWithCustomerByDocTargetId = async ({
   return response?.data?.node || null;
 };
 
-const a = {
-  type: 'doc',
-  content: [{ type: 'paragraph', content: [{ type: 'text', text: 'test' }] }],
-};
-
 type QueryReadDocWithAttributesByIdResponse = {
   data: {
     node: DocWithAttributes;
@@ -522,4 +517,51 @@ export const readDocWithAttributesById = async ({
     variables,
   });
   return response?.data?.node || null;
+};
+
+type QueryUpdateDocCustomerResponse = {
+  data: {
+    updateDocCustomer: DocWithCustomer;
+  };
+};
+
+export const updateDoc = async ({
+  docId,
+  customerId,
+}: {
+  docId: string;
+  customerId: string;
+}) => {
+  const query = `
+    mutation UpdateDocCustomer(
+      $docId: ID!,
+      $customerId: ID
+    ) {
+      updateDocCustomer(
+        docId: $docId, 
+        customerId: $customerId
+      ) {
+        id
+        title
+        customer {
+          id
+          name
+          email
+          company {
+            id
+            name
+          }
+        }
+      }
+    }
+`;
+  const variables = {
+    docId,
+    customerId,
+  };
+  const response = await queryCycle<QueryUpdateDocCustomerResponse>({
+    query,
+    variables,
+  });
+  return response?.data?.updateDocCustomer || null;
 };

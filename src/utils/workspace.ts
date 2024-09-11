@@ -1,5 +1,10 @@
 import { queryCycle } from './cycle';
 
+export enum Role {
+  MAKER = 'MAKER',
+  COLLABORATOR = 'COLLABORATOR',
+}
+
 type QueryWorkspaceBySlugResponse = {
   data: {
     getProductBySlug: {
@@ -132,4 +137,52 @@ export const fetchWorkspaceStatuses = async ({ slug }: { slug: string }) => {
     variables,
   });
   return response?.data.getProductStatuses || null;
+};
+
+type QueryWorkspaceMembersResponse = {
+  data: {
+    inviteProductUser: {
+      id: string;
+      email: string;
+      role: Role;
+    };
+  };
+};
+
+export const inviteMember = async ({
+  workspaceId,
+  email,
+  role,
+}: {
+  workspaceId: string;
+  email: string;
+  role?: Role;
+}) => {
+  const query = `
+    mutation InviteProductUser(
+      $workspaceId: ID!,
+      $email: EmailAddress!,
+      $role: Role!
+    ) {
+      inviteProductUser(
+        productId: $workspaceId,
+        email: $email,
+        role: $role
+      ) {
+        id
+        email
+      }
+    }
+  `;
+  const variables = {
+    workspaceId,
+    email,
+    role: role || Role.COLLABORATOR,
+  };
+  const response = await queryCycle<QueryWorkspaceMembersResponse>({
+    query,
+    variables,
+  });
+  console.log('response', response);
+  return response?.data?.inviteProductUser || null;
 };
