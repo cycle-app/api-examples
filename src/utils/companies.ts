@@ -3,6 +3,15 @@ import { queryCycle } from './cycle';
 export type Company = {
   id: string;
   name: string;
+  customers?: {
+    edges?: {
+      node?: {
+        id: string;
+        name: string;
+        email: string;
+      };
+    }[];
+  };
 };
 
 export type CompanyWithAttributes = Company & {
@@ -211,14 +220,83 @@ export const getCompanies = async ({
   };
 };
 
+type QueryCreateCompanyResponse = {
+  data: {
+    createCompany: Company;
+  };
+};
+
+export const createCompany = async ({
+  workspaceId,
+  name,
+  customerEmail,
+  customerName,
+}: {
+  workspaceId: string;
+  name: string;
+  customerEmail?: string;
+  customerName?: string;
+}) => {
+  const query = `
+    mutation CreateCompany(
+      $name: DefaultString!, 
+      $productId: ID!, 
+      $customerEmail: EmailAddress
+      $customerName: DefaultString
+    ) {
+    createCompany(
+      name: $name
+      productId: $productId
+      customerEmail: $customerEmail
+      customerName: $customerName
+    ) {
+      id
+      name
+      customers {
+        edges {
+          node {
+            id
+            name
+            email
+          }
+        }
+      }
+    }
+  }
+`;
+
+  const variables = {
+    productId: workspaceId,
+    name,
+    customerEmail,
+    customerName,
+  };
+  const response = await queryCycle<QueryCreateCompanyResponse>({
+    query,
+    variables,
+  });
+
+  return response?.data?.createCompany || null;
+};
+
 type QueryUpdateCompanyAttributeResponse =
   | {
       data: {
         updateCompanyAttributeValue: {
           id: string;
-          value: {
-            value: string;
+          definition: {
+            id: string;
+            __typename: string;
           };
+          value:
+            | {
+                id: string;
+                valueCheckbox: boolean;
+              }
+            | {
+                id: string;
+                valueText: string;
+              };
         };
       };
     }
@@ -234,7 +312,7 @@ export const updateCompanyAttribute = async ({
 }: {
   companyId: string;
   attributeDefinitionId: string;
-  value: string;
+  value: string | boolean;
 }) => {
   const query = `
     mutation updateCompanyAttributeValue(
@@ -247,10 +325,27 @@ export const updateCompanyAttribute = async ({
         attributeDefinitionId: $attributeDefinitionId,
         value: $value
       ) {
-        id
-        value {
-          ... on AttributeTextValue {
-            value
+        __typename
+        ... on CompanyAttributeCheckbox {
+          id
+          definition {
+            id
+            __typename
+          }
+          value {
+            id
+            valueCheckbox: value
+          }
+        }
+        ... on CompanyAttributeText {
+          id
+          definition {
+            id
+            __typename
+          }
+          value {
+            id
+            valueText: value
           }
         }
       }
@@ -259,7 +354,7 @@ export const updateCompanyAttribute = async ({
   const variables = {
     companyId,
     attributeDefinitionId,
-    value: { text: value },
+    value: typeof value === 'boolean' ? { checkbox: value } : { text: value },
   };
   const response = await queryCycle<QueryUpdateCompanyAttributeResponse>({
     query,
@@ -378,4 +473,49 @@ export const updateCompanyArr = async ({
   });
 
   return response?.data?.updateCompany || null;
+};
+
+type QueryCreateCompanyAttributeResponse = {
+  data: {
+    addNewCompanyAttribute: {
+      id: string;
+      name: string;
+    };
+  };
+};
+
+export const createCustomerCompanyAttributeBoolean = async ({
+  workspaceId,
+  attributeName,
+}: {
+  workspaceId: string;
+  attributeName: string;
+}) => {
+  const query = `
+    mutation scalarBooleanAttribute {
+      addNewCompanyAttribute(
+        input: {
+          productId: $productId
+          name: $name
+          color: a
+          type: { scalar: { type: BOOLEAN } }
+        }
+      ) {
+        __typename
+        ... on AttributeCheckboxDefinition {
+          id
+          name
+        }
+      }
+    }
+  `;
+  const variables = {
+    workspaceId,
+    attributeName,
+  };
+  const response = await queryCycle<QueryCreateCompanyAttributeResponse>({
+    query,
+    variables,
+  });
+  return response?.data?.addNewCompanyAttribute || null;
 };

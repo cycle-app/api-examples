@@ -3,6 +3,7 @@ import { createObjectCsvWriter } from 'csv-writer';
 export * from './attributes';
 export * from './change-log';
 export * from './companies';
+export * from './csv';
 export * from './customers';
 export * from './doc-types';
 export * from './doc';

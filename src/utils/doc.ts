@@ -179,7 +179,7 @@ export const createFeedback = async ({
     $title: DefaultString!
     $company: CompanyInput
     $customerEmail: EmailAddress
-    $sourceUrl: String!
+    $source: String!
     $content: DefaultString
     $attributes: [AddNewDocAttributeValue!]
   ) {
@@ -188,7 +188,7 @@ export const createFeedback = async ({
       title: $title
       company: $company
       customer: $customerEmail
-      source: { sourceWeb: { url: $sourceUrl } }
+      source: $source
       contentHTML: $content
       attributes: $attributes
     ) {
@@ -211,7 +211,7 @@ export const createFeedback = async ({
     title,
     company: companyName ? { name: companyName } : undefined,
     customerEmail: companyName ? undefined : customerEmail,
-    sourceUrl,
+    source: { sourceWeb: { url: sourceUrl } },
     content,
     attributes,
   };

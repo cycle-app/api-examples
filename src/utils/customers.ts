@@ -1,13 +1,22 @@
 import { queryCycle } from './cycle';
 
+type Customer = {
+  id: string;
+  name: string;
+  email: string;
+};
+
+type CustomerWithCompany = Customer & {
+  company?: {
+    id: string;
+    name?: string;
+  };
+};
+
 type QueryUpdateCustomerResponse =
   | {
       data: {
-        updateCustomer: {
-          id: string;
-          name: string;
-          email: string;
-        };
+        updateCustomer: Customer;
       };
     }
   | {
@@ -19,10 +28,12 @@ export const updateCustomer = async ({
   customerId,
   name,
   email,
+  companyId,
 }: {
   customerId: string;
   name?: string;
   email?: string;
+  companyId?: string;
 }) => {
   const query = `
     mutation updateCustomer(
@@ -45,8 +56,9 @@ export const updateCustomer = async ({
 `;
   const variables = {
     customerId,
-    name: name || '',
-    email: email || '',
+    name,
+    email,
+    companyId,
   };
   const response = await queryCycle<QueryUpdateCustomerResponse>({
     query,
@@ -65,11 +77,7 @@ type QueryGetCustomerByEmailResponse = {
           hasNextPage: boolean;
         };
         edges: {
-          node: {
-            id: string;
-            name: string;
-            email: string;
-          };
+          node: Customer;
         }[];
       };
     };
@@ -126,4 +134,110 @@ export const getCustomerByEmail = async ({
     return response?.data?.node.customers.edges?.[0].node;
   console.log('not found: ', email);
   return null;
+};
+
+type FetchCustomersResponse = {
+  data: {
+    node: {
+      customers: {
+        pageInfo: {
+          endCursor: string;
+          hasNextPage: boolean;
+        };
+        edges: {
+          node: CustomerWithCompany;
+        }[];
+      };
+    };
+  };
+};
+
+export const fetchCustomers = async ({
+  workspaceId,
+  cursor,
+}: {
+  workspaceId: string;
+  cursor: string;
+}) => {
+  const query = `
+    query productCustomers(
+      $workspaceId: ID!, 
+      $size: Int!, 
+      $cursor: String!, 
+      $searchText: DefaultString
+    ) {
+      node(id: $workspaceId) {
+        ... on Product {
+          customers(
+            searchText: $searchText
+            pagination: {size: $size, where: {cursor: $cursor, direction: AFTER}}
+          ) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            edges {
+              node {
+                id
+                name
+                email
+                company {
+                  id
+                  name
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+`;
+  const variables = {
+    workspaceId,
+    size: 700,
+    cursor,
+    searchText: '',
+  };
+  const response = await queryCycle<FetchCustomersResponse>({
+    query,
+    variables,
+  });
+  if (response?.data?.node.customers.edges?.[0]?.node)
+    return {
+      data: response?.data.node.customers.edges.map((edge) => edge.node),
+      cursor: response?.data.node.customers.pageInfo.hasNextPage
+        ? response?.data.node.customers.pageInfo.endCursor
+        : undefined,
+    };
+  return null;
+};
+
+type DeleteCustomerResponse = {
+  data: {
+    removeCustomer: {
+      id?: string;
+    };
+  };
+};
+
+export const deleteCustomer = async ({
+  customerId,
+}: {
+  customerId: string;
+}) => {
+  const query = `
+    mutation RemoveCustomer($customerId: ID!) {
+      removeCustomer(customerId: $customerId) {
+        id
+      }
+    }
+`;
+  const variables = {
+    customerId,
+  };
+  const response = await queryCycle<DeleteCustomerResponse>({
+    query,
+    variables,
+  });
+  return response?.data?.removeCustomer || null;
 };
