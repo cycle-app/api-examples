@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "import:canny": "ts-node src/examples/import-canny/index.ts",
+    "import:csv": "ts-node src/examples/import-feedback-from-csv/index.ts",
     "import:gong": "ts-node src/examples/import-gong/index.ts",
     "import:hubspot-customer-attributes": "ts-node src/examples/import-hubspot-customers-attributes/index.ts",
     "publish:release-to-slack": "ts-node src/examples/pulish-release-note-to-slack/manual-trigger.ts",

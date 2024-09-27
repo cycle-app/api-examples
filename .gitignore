@@ -59,6 +59,7 @@ node_modules
 # Helper internal scripts
 /src/scripts/*
 
-# Outputs
+# Outputs/Inputs
 /src/examples/read-release-customers/output/*.csv
 /src/examples/import-hubspot-customers-attributes/output/*.txt
+/src/examples/import-feedback-from-csv/input/*.csv
