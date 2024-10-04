@@ -102,10 +102,12 @@ export const getCompanies = async ({
   workspaceId,
   cursor = '',
   size = 50,
+  search = '',
 }: {
   workspaceId: string;
   cursor?: string;
   size?: number;
+  search?: string;
 }) => {
   const query = `
     query getCompanies(
@@ -200,7 +202,7 @@ export const getCompanies = async ({
 
   const variables = {
     productId: workspaceId,
-    searchText: '',
+    searchText: search,
     size,
     cursor,
   };
@@ -222,7 +224,7 @@ export const getCompanies = async ({
 
 type QueryCreateCompanyResponse = {
   data: {
-    createCompany: Company;
+    createCompany: CompanyWithAttributes;
   };
 };
 
@@ -258,6 +260,64 @@ export const createCompany = async ({
             id
             name
             email
+          }
+        }
+      }
+      arr
+      numberOfEmployees
+      zendeskId
+      hubspotId
+      intercomId
+      pipedriveId
+      snowflakeId
+      customId
+      attributes(pagination: {size: 50}) {
+        edges {
+          node {
+            ... on CompanyAttributeNumber {
+            id
+              definition {
+                id
+                __typename
+              }
+              value {
+                id
+                valueNumber: value
+              }
+            }
+            ... on CompanyAttributeSingleSelect {
+              id
+              definition {
+                id
+                __typename
+              }
+              value {
+                id
+                valueSelect: value
+              }
+            }
+            ... on CompanyAttributeCheckbox {
+              id
+              definition {
+                id
+                __typename
+              }
+              value {
+                id
+                valueCheckbox: value
+              }
+            }
+            ... on CompanyAttributeText {
+              id
+              definition {
+                id
+                __typename
+              }
+              value {
+                id
+                valueText: value
+              }
+            }
           }
         }
       }
@@ -368,6 +428,7 @@ type QueryUpdateCompanyResponse =
       data: {
         updateCompany: {
           id: string;
+          name: string;
         };
       };
     }
@@ -386,6 +447,14 @@ export const updateCompany = async ({
     domain?: string;
     arr?: number;
     numberOfEmployees?: number;
+    externalId?: {
+      zendesk?: string;
+      hubspot?: string;
+      intercom?: string;
+      pipedrive?: string;
+      snowflake?: string;
+      custom?: string;
+    };
   };
 }) => {
   const query = `
@@ -395,15 +464,18 @@ export const updateCompany = async ({
       $domain: String,
       $arr: Float,
       $numberOfEmployees: Int
+      $externalId: ExternalCompanyInput
     ) {
       updateCompany(
         id: $companyId,
         name: $name,
         domain: $domain,
         arr: $arr, 
-        numberOfEmployees: $numberOfEmployees
+        numberOfEmployees: $numberOfEmployees,
+        externalId: $externalId
       ) {
         id
+        name
       }
     }
   `;
