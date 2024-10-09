@@ -19,6 +19,7 @@
   "devDependencies": {
     "@hubspot/api-client": "^11.2.0",
     "@slack/web-api": "^7.3.4",
+    "@types/google-apps-script": "^1.0.83",
     "@types/node": "20.14.9",
     "@types/turndown": "^5.0.5",
     "csv-parser": "^3.0.0",
