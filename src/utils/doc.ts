@@ -1,5 +1,7 @@
 import { queryCycle } from './cycle';
 
+export const convertUuidToCycleDocId = (uuid: string) => btoa(`Doc_${uuid}`);
+
 export type Doc = {
   id: string;
   title: string;
@@ -58,6 +60,13 @@ type DocWithAttributes = Doc & {
         };
       };
     }[];
+  };
+};
+
+type DocWithDocType = Doc & {
+  doctype: {
+    id: string;
+    name: string;
   };
 };
 
@@ -284,6 +293,37 @@ export const createInsight = async ({
     variables,
   });
   return response?.data.createFeedback.id;
+};
+
+type QueryReadDocIdResponse = {
+  data: {
+    node: DocWithDocType;
+  };
+};
+
+export const readDocById = async ({ docId }: { docId: string }) => {
+  const query = `
+    query fetchDoc($docId: ID!) {
+      node(id: $docId) {
+        ... on Doc {
+          id
+          title
+          doctype {
+            id
+            name
+          }
+        }
+      }
+    }
+`;
+  const variables = {
+    docId,
+  };
+  const response = await queryCycle<QueryReadDocIdResponse>({
+    query,
+    variables,
+  });
+  return response?.data?.node || null;
 };
 
 type QueryReadDocWithCustomerByIdResponse = {
@@ -525,7 +565,7 @@ type QueryUpdateDocCustomerResponse = {
   };
 };
 
-export const updateDoc = async ({
+export const updateDocCustomer = async ({
   docId,
   customerId,
 }: {
@@ -564,4 +604,95 @@ export const updateDoc = async ({
     variables,
   });
   return response?.data?.updateDocCustomer || null;
+};
+
+type QueryUpdateDocParentResponse = {
+  data: {
+    changeDocParent: Doc;
+  };
+};
+
+export const updateDocParent = async ({
+  docId,
+  parentId,
+}: {
+  docId: string;
+  parentId: string;
+}) => {
+  const query = `
+    mutation UpdateDocParent(
+      $docId: ID!,
+      $parentId: ID
+    ) {
+      changeDocParent(
+        docId: $docId, 
+        parentId: $parentId
+      ) {
+        id
+        title
+      }
+    }
+`;
+  const variables = {
+    docId,
+    parentId,
+  };
+  const response = await queryCycle<QueryUpdateDocParentResponse>({
+    query,
+    variables,
+  });
+  return response?.data?.changeDocParent || null;
+};
+
+type QueryGetCustomerByEmailResponse = {
+  data: {
+    searchDoc: {
+      edges: {
+        node: {
+          doc: Doc;
+        };
+      }[];
+    };
+  };
+};
+
+export const getDocByKey = async ({
+  searchText,
+  workspaceId,
+}: {
+  searchText?: string;
+  workspaceId: string;
+}) => {
+  const query = `
+    query getDocByKey(
+      $workspaceId: ID!, 
+      $searchText: DefaultString
+    ) {
+      searchDoc(
+        productId: $workspaceId,
+        text: $searchText
+      ) {
+        edges {
+          node {
+            doc {
+              id
+              title
+            }
+          }
+        }
+      }
+    }
+`;
+  const variables = {
+    workspaceId,
+    searchText,
+  };
+  const response = await queryCycle<QueryGetCustomerByEmailResponse>({
+    query,
+    variables,
+  });
+  if (response?.data?.searchDoc?.edges?.length) {
+    return response?.data?.searchDoc.edges?.[0].node.doc;
+  }
+  return null;
 };

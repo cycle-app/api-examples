@@ -74,6 +74,12 @@ export type CompanyWithAttributes = Company & {
   };
 };
 
+export type CompanyWithAttributesAndCount = CompanyWithAttributes & {
+  customers?: {
+    count?: number;
+  };
+};
+
 type QueryGetCompaniesResponse = {
   data:
     | {
@@ -86,7 +92,7 @@ type QueryGetCompaniesResponse = {
               __typename: string;
             };
             edges: {
-              node: CompanyWithAttributes;
+              node: CompanyWithAttributesAndCount;
             }[];
           };
         };
@@ -142,6 +148,9 @@ export const getCompanies = async ({
                 pipedriveId
                 snowflakeId
                 customId
+                customers {
+                    count
+                }
                 attributes(pagination: {size: 50}) {
                   edges {
                     node {
@@ -590,4 +599,31 @@ export const createCustomerCompanyAttributeBoolean = async ({
     variables,
   });
   return response?.data?.addNewCompanyAttribute || null;
+};
+
+type QueryDeleteCompanyResponse = {
+  data: {
+    deleteCompany: {
+      id: string;
+    };
+  };
+};
+
+export const deleteCompany = async ({ companyId }: { companyId: string }) => {
+  const query = `
+    mutation DeleteCompany($companyId: ID!) {
+      deleteCompany(id: $companyId) {
+        __typename
+        id
+      }
+    }
+  `;
+  const variables = {
+    companyId,
+  };
+  const response = await queryCycle<QueryDeleteCompanyResponse>({
+    query,
+    variables,
+  });
+  return response?.data?.deleteCompany || null;
 };
