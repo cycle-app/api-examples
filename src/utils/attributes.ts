@@ -1,4 +1,5 @@
 import { queryCycle } from './cycle';
+import { formatDateAndTime } from './dates';
 
 type CreateAttributeParams = {
   workspaceId: string;
@@ -57,6 +58,18 @@ export const createAttribute = async ({
     variables,
   });
   return response?.data?.addNewAttribute || null;
+};
+
+export const createImportAttribute = async (workspaceId: string) => {
+  const [formattedDate, formattedTime] = formatDateAndTime(
+    new Date(Date.now())
+  );
+  const attribute = await createAttribute({
+    workspaceId,
+    attributeName: `Imported on ${formattedDate} at ${formattedTime}`,
+    attributeDescription: '',
+  });
+  return attribute;
 };
 
 type QueryFetchCheckboxAttributesResponse = {

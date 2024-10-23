@@ -1,6 +1,7 @@
 import { createObjectCsvWriter } from 'csv-writer';
 
 export * from './attributes';
+export * from './dates';
 export * from './change-log';
 export * from './companies';
 export * from './csv';

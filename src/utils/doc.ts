@@ -95,7 +95,7 @@ export const createDoc = async ({
       checkbox: boolean;
     };
   }[];
-  contentJSON: any;
+  contentJSON?: any;
   customerId?: string;
   docSourceId?: string;
   parentId?: string;
@@ -695,4 +695,36 @@ export const getDocByKey = async ({
     return response?.data?.searchDoc.edges?.[0].node.doc;
   }
   return null;
+};
+
+type QueryUpdateDocContentResponse = {
+  data: {
+    updateDocContent: Doc;
+  };
+};
+
+export const updateDocContent = async ({
+  docId,
+  contentHTML,
+}: {
+  docId: string;
+  contentHTML: string;
+}): Promise<Doc | null> => {
+  const query = `
+    mutation UpdateDocContent($docId: ID!, $contentHTML: DefaultString) {
+      updateDocContent(docId: $docId, contentHTML: $contentHTML) {
+        id
+        title
+      }
+    }
+  `;
+  const variables = {
+    docId,
+    contentHTML,
+  };
+  const response = await queryCycle<QueryUpdateDocContentResponse>({
+    query,
+    variables,
+  });
+  return response?.data?.updateDocContent || null;
 };

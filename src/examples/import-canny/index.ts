@@ -1,12 +1,11 @@
 import {
-  formatDateAndTime,
-  wait,
-  createAttribute,
-  fetchWorkspaceId,
-  fetchWorkspaceDocTypes,
-  linkAttributeToDocType,
   createDoc,
   createFeedback,
+  createImportAttribute,
+  fetchWorkspaceDocTypes,
+  fetchWorkspaceId,
+  linkAttributeToDocType,
+  wait,
 } from '../../utils';
 import { slug } from '../../config';
 import { cannyConfig } from './config';
@@ -105,18 +104,6 @@ const fetchAllVotes = async (
   } else {
     return accumulatedVotes;
   }
-};
-
-const createImportAttribute = async (workspaceId: string) => {
-  const [formattedDate, formattedTime] = formatDateAndTime(
-    new Date(Date.now())
-  );
-  const attribute = await createAttribute({
-    workspaceId,
-    attributeName: `Imported on ${formattedDate} at ${formattedTime}`,
-    attributeDescription: '',
-  });
-  return attribute;
 };
 
 const fetchDocTypes = async (workspaceId: string) => {
