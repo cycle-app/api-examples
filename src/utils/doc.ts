@@ -17,6 +17,9 @@ export type DocWithCustomer = Doc & {
     };
   };
 };
+
+export type DocWithReporterAndDocType = Doc & DocTypeBase & ReporterBase;
+
 export type DocWithSourceDoc = Doc & {
   docSource: {
     id: string;
@@ -63,10 +66,21 @@ type DocWithAttributes = Doc & {
   };
 };
 
-type DocWithDocType = Doc & {
+type DocWithDocType = Doc & DocTypeBase;
+
+type DocTypeBase = {
   doctype: {
     id: string;
     name: string;
+  };
+};
+
+type ReporterBase = {
+  assignee: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
   };
 };
 
@@ -359,6 +373,48 @@ export const readDocWithCustomerById = async ({ docId }: { docId: string }) => {
     query,
     variables,
   });
+  return response?.data?.node || null;
+};
+
+type QueryReadDocWithReporterAndDocTypeByIdResponse = {
+  data: {
+    node: DocWithReporterAndDocType;
+  };
+};
+
+export const readDocWithReporterAndDocTypeById = async ({
+  docId,
+}: {
+  docId: string;
+}) => {
+  const query = `
+    query fetchDoc($docId: ID!) {
+      node(id: $docId) {
+        ... on Doc {
+          id
+          title
+          doctype {
+            id
+            name
+          }
+          assignee {
+            id
+            email
+            firstName
+            lastName
+          }
+        }
+      }
+    }
+`;
+  const variables = {
+    docId,
+  };
+  const response =
+    await queryCycle<QueryReadDocWithReporterAndDocTypeByIdResponse>({
+      query,
+      variables,
+    });
   return response?.data?.node || null;
 };
 
@@ -727,4 +783,67 @@ export const updateDocContent = async ({
     variables,
   });
   return response?.data?.updateDocContent || null;
+};
+
+type QueryUpdateDocAttributeSelectResponse = {
+  data: {
+    changeDocAttributeValue: {
+      __typename: string;
+      id: string;
+      value: {
+        __typename: string;
+        id: string;
+        value: string; // refers to an ID
+      };
+    };
+  };
+};
+
+export const updateDocSelectAttribute = async ({
+  docId,
+  attributeDefinitionId,
+  selectValueId,
+}: {
+  docId: string;
+  attributeDefinitionId: string;
+  selectValueId: string;
+}) => {
+  const query = `
+    mutation UpdateDocSelectAttribute(
+      $docId: ID!,
+      $attributeDefinitionId: ID!,
+      $value: DocAttributeValueInput!
+    ) {
+      changeDocAttributeValue(
+        docId: $docId,
+        attributeDefinitionId: $attributeDefinitionId,
+        value: { select: $value.select }
+      ) {
+        __typename
+        ... on DocAttributeNumber {
+          id
+          value {
+            __typename
+            id
+            value
+          }
+        }
+      }
+    }
+  `;
+
+  const variables = {
+    docId,
+    attributeDefinitionId,
+    value: {
+      select: selectValueId,
+    },
+  };
+
+  const response = await queryCycle<QueryUpdateDocAttributeSelectResponse>({
+    query,
+    variables,
+  });
+
+  return response?.data?.changeDocAttributeValue || null;
 };
