@@ -1,4 +1,5 @@
 import { queryCycle } from './cycle';
+import { DocAttributeValueInput } from './attributes';
 
 export const convertUuidToCycleDocId = (uuid: string) => btoa(`Doc_${uuid}`);
 
@@ -187,9 +188,7 @@ export const createFeedback = async ({
   title: string;
   attributes: {
     attributeDefinitionId: string;
-    value: {
-      checkbox: boolean;
-    };
+    value: DocAttributeValueInput;
   }[];
   companyName?: string;
   customerEmail?: string;
@@ -202,7 +201,7 @@ export const createFeedback = async ({
     $title: DefaultString!
     $company: CompanyInput
     $customerEmail: EmailAddress
-    $source: String!
+    $source: SourceInput!
     $content: DefaultString
     $attributes: [AddNewDocAttributeValue!]
   ) {

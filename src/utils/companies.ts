@@ -627,3 +627,83 @@ export const deleteCompany = async ({ companyId }: { companyId: string }) => {
   });
   return response?.data?.deleteCompany || null;
 };
+
+type QueryFindCompanyByNameResponse = {
+  data:
+    | {
+        node: {
+          companies: {
+            edges: {
+              node: Company;
+            }[];
+          };
+        };
+      }
+    | {
+        node: undefined;
+        errors: [{ message: string; extensions: [any] }];
+        data: { companies: null };
+      };
+};
+
+export const findCompanyByName = async ({
+  workspaceId,
+  companyName,
+  cursor = '',
+  size = 1, // set size to 1 to limit results to the first match
+}: {
+  workspaceId: string;
+  companyName: string;
+  cursor?: string;
+  size?: number;
+}) => {
+  const query = `
+    query SearchProductCompanies(
+      $workspaceId: ID!, 
+      $searchText: DefaultString, 
+      $size: Int!, 
+      $cursor: String!
+    ) {
+      node(id: $workspaceId) {
+        ... on Product {
+          companies(
+            searchText: $searchText
+            pagination: {size: $size, where: {cursor: $cursor, direction: AFTER}}
+          ) {
+            edges {
+              node {
+                id
+                name
+                customers {
+                  edges {
+                    node {
+                      id
+                      name
+                      email
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  const variables = {
+    workspaceId,
+    searchText: companyName,
+    size,
+    cursor,
+  };
+
+  const response = await queryCycle<QueryFindCompanyByNameResponse>({
+    query,
+    variables,
+  });
+
+  return response?.data?.node?.companies?.edges?.length
+    ? response.data.node.companies.edges.map((e) => e.node)
+    : [];
+};

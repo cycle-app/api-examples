@@ -11,7 +11,7 @@
     "import:modjo": "ts-node src/examples/import-modjo/index.ts",
     "import:notion": "ts-node src/examples/import-notion/index.ts",
     "import:planhat-customer-attributes": "ts-node src/examples/import-customers-data-from-planhat/index.ts",
-    "publish:release-to-slack": "ts-node src/examples/pulish-release-note-to-slack/manual-trigger.ts",
+    "publish:release-to-slack": "ts-node src/examples/publish-release-note-to-slack/manual-trigger.ts",
     "releases:create": "ts-node src/examples/create-releases/index.ts",
     "releases:export-customers": "ts-node src/examples/read-release-customers/index.ts",
     "releases:read": "ts-node src/examples/read-releases/index.ts"
@@ -24,6 +24,8 @@
     "@types/google-apps-script": "^1.0.83",
     "@types/node": "20.14.9",
     "@types/turndown": "^5.0.5",
+    "axios": "^1.7.7",
+    "cheerio": "^1.0.0",
     "csv-parser": "^3.0.0",
     "csv-writer": "^1.6.0",
     "dayjs": "^1.11.13",

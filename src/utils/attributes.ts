@@ -1,6 +1,17 @@
 import { queryCycle } from './cycle';
 import { formatDateAndTime } from './dates';
 
+export type DocAttributeValueInput =
+  | { email: string }
+  | { url: string }
+  | { phone: string }
+  | { number: number }
+  | { text: string }
+  | { select: string }
+  | { selects: string[] }
+  | { date: string }
+  | { checkbox: boolean };
+
 type CreateAttributeParams = {
   workspaceId: string;
   attributeName: string;
