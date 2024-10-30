@@ -4,6 +4,7 @@
   "description": "This repository provides a collection of examples demonstrating how to use the Cycle API with TypeScript. These examples cover various common use cases such as fetching data and handling webhooks.",
   "main": "index.js",
   "scripts": {
+    "ai:process-feedback": "ts-node src/examples/ai-bulk-process-feedback/index.ts",
     "import:canny": "ts-node src/examples/import-canny/index.ts",
     "import:csv": "ts-node src/examples/import-feedback-from-csv/index.ts",
     "import:gong": "ts-node src/examples/import-gong/index.ts",

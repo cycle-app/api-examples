@@ -114,7 +114,7 @@ export const createDoc = async ({
   customerId?: string;
   docSourceId?: string;
   parentId?: string;
-}): Promise<Doc | null> => {
+}): Promise<Doc | null | undefined> => {
   const query = `
     mutation AddNewDoc(
       $title: DefaultString!
@@ -165,7 +165,7 @@ export const createDoc = async ({
     console.log('Variables:', JSON.stringify(variables));
     console.log('Responses:', JSON.stringify(response));
     console.groupEnd();
-    process.exit();
+    return;
   }
 };
 
@@ -845,4 +845,151 @@ export const updateDocSelectAttribute = async ({
   });
 
   return response?.data?.changeDocAttributeValue || null;
+};
+
+type QuerySearchDocsResponse = {
+  data: {
+    searchDoc: {
+      pageInfo: {
+        hasNextPage: boolean;
+        endCursor: string;
+      };
+      edges: {
+        node: {
+          doc: {
+            id: string;
+            publicId: string;
+            title: string;
+            doctype: {
+              id: string;
+            };
+            status: {
+              id: string;
+              category: string;
+              value: string;
+            };
+            automationId?: string;
+            automationUrl?: string;
+            quotes?: {
+              edges: {
+                node: {
+                  id: string;
+                  content: string;
+                };
+              }[];
+            };
+          };
+          highlightTitle: string;
+          highlightContent: string;
+          highlightIndex: number;
+        };
+      }[];
+    };
+  };
+};
+
+export const searchDocs = async ({
+  text,
+  productId,
+  hasParent,
+  doctypeIds,
+  childDoctypeId,
+  statusIds,
+  size = 20,
+  cursor = '',
+  hasAutomation,
+  automationId,
+}: {
+  text?: string;
+  productId: string;
+  hasParent?: boolean;
+  doctypeIds?: string[];
+  childDoctypeId?: string;
+  statusIds?: string[];
+  size?: number;
+  cursor?: string;
+  hasAutomation?: boolean;
+  automationId?: string;
+}) => {
+  const query = `
+    query SearchDoc(
+      $text: DefaultString, 
+      $productId: ID!, 
+      $hasParent: Boolean,
+      $doctypeIds: [ID!], 
+      $childDoctypeId: ID, 
+      $statusIds: [ID!], 
+      $size: Int!, 
+      $cursor: String!, 
+      $hasAutomation: Boolean, 
+      $automationId: String
+    ) {
+      searchDoc(
+        text: $text,
+        productId: $productId,
+        hasParent: $hasParent,
+        doctypeIds: $doctypeIds,
+        childDoctypeId: $childDoctypeId,
+        statusIds: $statusIds,
+        hasAutomation: $hasAutomation,
+        automationId: $automationId,
+        pagination: {size: $size, where: {cursor: $cursor, direction: AFTER}}
+      ) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        edges {
+          node {
+            doc {
+              id
+              publicId
+              title
+              doctype {
+                id
+              }
+              status {
+                id
+                category
+                value
+              }
+              automationId
+              automationUrl
+              quotes(pagination: { size: 100 }) {
+                edges {
+                  node {
+                    id
+                    content
+                  }
+                }
+              }
+            }
+            highlightTitle
+            highlightContent
+            highlightIndex
+          }
+        }
+      }
+    }
+  `;
+
+  const variables = {
+    text,
+    productId,
+    hasParent,
+    doctypeIds,
+    childDoctypeId,
+    statusIds,
+    size,
+    cursor,
+    hasAutomation,
+    automationId,
+  };
+
+  const response = await queryCycle<QuerySearchDocsResponse>({
+    query,
+    variables,
+  });
+
+  return response?.data?.searchDoc || null;
 };
