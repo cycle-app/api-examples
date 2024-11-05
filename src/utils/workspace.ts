@@ -29,6 +29,43 @@ export const fetchWorkspaceId = async ({ slug }: { slug: string }) => {
   return response?.data?.getProductBySlug?.id || null;
 };
 
+type QueryWorkspaceWithDefaultAssigneeBySlugResponse = {
+  data: {
+    getProductBySlug: {
+      id: string;
+      defaultAssignee: {
+        id: string;
+        email: string;
+      };
+    };
+  };
+};
+
+export const fetchWorkspaceIdWithDefaultAssignee = async ({
+  slug,
+}: {
+  slug: string;
+}) => {
+  const query = `
+    query workspaceBySlug($slug: DefaultString!) {
+      getProductBySlug(slug: $slug) {
+        id
+        defaultAssignee {
+          id
+          email
+        }
+      }
+    }
+  `;
+  const variables = { slug };
+  const response =
+    await queryCycle<QueryWorkspaceWithDefaultAssigneeBySlugResponse>({
+      query,
+      variables,
+    });
+  return response?.data?.getProductBySlug || null;
+};
+
 type QueryWorkspaceStatusesResponse = {
   data: {
     getProductStatuses: {
@@ -152,22 +189,34 @@ type QueryWorkspaceMembersResponse = {
 export const inviteMember = async ({
   workspaceId,
   email,
+  firstName,
+  lastName,
   role,
+  shouldSendInviteMail,
 }: {
   workspaceId: string;
   email: string;
+  firstName?: string;
+  lastName?: string;
   role?: Role;
+  shouldSendInviteMail?: boolean;
 }) => {
   const query = `
     mutation InviteProductUser(
       $workspaceId: ID!,
       $email: EmailAddress!,
+      $firstName: DefaultString,
+      $lastName: DefaultString,
       $role: Role!
+      $shouldSendInviteMail: Boolean
     ) {
       inviteProductUser(
         productId: $workspaceId,
         email: $email,
+        firstName: $firstName,
+        lastName: $lastName,
         role: $role
+        shouldSendInviteMail: $shouldSendInviteMail
       ) {
         id
         email
@@ -177,7 +226,10 @@ export const inviteMember = async ({
   const variables = {
     workspaceId,
     email,
+    firstName,
+    lastName,
     role: role || Role.COLLABORATOR,
+    shouldSendInviteMail: shouldSendInviteMail || false,
   };
   const response = await queryCycle<QueryWorkspaceMembersResponse>({
     query,

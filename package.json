@@ -9,6 +9,7 @@
     "import:csv": "ts-node src/examples/import-feedback-from-csv/index.ts",
     "import:gong": "ts-node src/examples/import-gong/index.ts",
     "import:hubspot-customer-attributes": "ts-node src/examples/import-hubspot-customers-attributes/index.ts",
+    "import:members": "ts-node src/examples/import-members-from-csv/index.ts",
     "import:modjo": "ts-node src/examples/import-modjo/index.ts",
     "import:notion": "ts-node src/examples/import-notion/index.ts",
     "import:planhat-customer-attributes": "ts-node src/examples/import-customers-data-from-planhat/index.ts",

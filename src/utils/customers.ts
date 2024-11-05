@@ -241,3 +241,148 @@ export const deleteCustomer = async ({
   });
   return response?.data?.removeCustomer || null;
 };
+
+type QueryCompanyCustomersResponse = {
+  data: {
+    node: {
+      id: string;
+      customers: {
+        pageInfo: {
+          hasNextPage: boolean;
+          endCursor: string;
+        };
+        edges: {
+          node: {
+            id: string;
+            email: string;
+            name: string;
+            avatar: string | null;
+            nbFeedbacks: number;
+            nbInsights: number;
+            company: {
+              id: string;
+              name: string;
+              domain: string;
+              isDefault: boolean;
+              logo: string | null;
+            };
+            profiles: {
+              __typename: string;
+              url?: string;
+            }[];
+          };
+        }[];
+        count: number;
+      };
+    };
+  };
+};
+
+export const getCompanyCustomers = async ({
+  companyId,
+  searchText = '',
+  size = 20,
+  cursor = '',
+}: {
+  companyId: string;
+  searchText?: string;
+  size?: number;
+  cursor?: string;
+}) => {
+  const query = `
+    query CompanyCustomers($id: ID!, $searchText: DefaultString, $size: Int!, $cursor: String!) {
+      node(id: $id) {
+        ... on Company {
+          id
+          customers(
+            searchText: $searchText
+            pagination: {size: $size, where: {cursor: $cursor, direction: AFTER}}
+          ) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            edges {
+              node {
+                ...CustomerWithDoctypeCount
+              }
+            }
+            count
+          }
+        }
+      }
+    }
+
+    fragment CustomerWithDoctypeCount on Customer {
+      ...Customer
+      nbFeedbacks
+      nbInsights
+    }
+
+    fragment Customer on Customer {
+      id
+      email
+      name
+      avatar
+      company {
+        id
+        name
+        domain
+        isDefault
+        logo
+      }
+      profiles {
+        __typename
+        ...ProfileCycle
+        ...ProfileIntercom
+        ...ProfileSlack
+        ...ProfileHubspot
+        ...ProfileZendesk
+        ...ProfileSalesforce
+      }
+    }
+
+    fragment ProfileCycle on ProfileCycle {
+      id
+    }
+
+    fragment ProfileIntercom on ProfileIntercom {
+      id
+      url
+    }
+
+    fragment ProfileSlack on ProfileSlack {
+      id
+      url
+    }
+
+    fragment ProfileHubspot on ProfileHubspot {
+      id
+      url
+    }
+
+    fragment ProfileZendesk on ProfileZendesk {
+      id
+      url
+    }
+
+    fragment ProfileSalesforce on ProfileSalesforce {
+      id
+      url
+    }
+  `;
+
+  const variables = {
+    id: companyId,
+    searchText,
+    size,
+    cursor,
+  };
+
+  const response = await queryCycle<QueryCompanyCustomersResponse>({
+    query,
+    variables,
+  });
+
+  return response?.data?.node?.customers || null;
+};
