@@ -67,3 +67,16 @@ node_modules
 /src/examples/read-release-customers/output/*.csv
 /src/examples/import-hubspot-customers-attributes/output/*.txt
 /src/examples/import-feedback-from-csv/input/*.csv
+
+# Ignore the virtual environment folder
+venv/
+
+# Ignore Python cache and compiled files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Ignore environment-specific configurations
+.env
+.DS_Store  # macOS file
