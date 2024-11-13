@@ -386,3 +386,61 @@ export const getCompanyCustomers = async ({
 
   return response?.data?.node?.customers || null;
 };
+
+type CreateCustomerResponse = {
+  data: {
+    createCustomer: Customer;
+  };
+};
+
+export const createCustomer = async ({
+  email,
+  workspaceId,
+  name,
+  companyId,
+  companyName,
+}: {
+  email?: string;
+  workspaceId: string;
+  name?: string;
+  companyId?: string;
+  companyName?: string;
+}) => {
+  const query = `
+    mutation CreateCustomer(
+      $email: EmailAddress, 
+      $workspaceId: ID!, 
+      $name: DefaultString, 
+      $companyId: ID, 
+      $companyName: DefaultString
+    ) {
+      createCustomer(
+        email: $email
+        productId: $workspaceId
+        name: $name
+        companyId: $companyId
+        companyName: $companyName
+      ) {
+        __typename
+        id
+        name
+        email
+      }
+    }
+  `;
+
+  const variables = {
+    email,
+    workspaceId,
+    name,
+    companyId,
+    companyName,
+  };
+
+  const response = await queryCycle<CreateCustomerResponse>({
+    query,
+    variables,
+  });
+
+  return response?.data?.createCustomer || null;
+};

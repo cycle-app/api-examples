@@ -377,7 +377,15 @@ export const readDocWithCustomerById = async ({ docId }: { docId: string }) => {
 
 type QueryReadDocWithReporterAndDocTypeByIdResponse = {
   data: {
-    node: DocWithReporterAndDocType;
+    node: DocWithReporterAndDocType & {
+      contentHtml: string;
+      source: {
+        __typename: string;
+        id: string;
+        url: string;
+        fileSize?: number;
+      };
+    };
   };
 };
 
@@ -392,6 +400,7 @@ export const readDocWithReporterAndDocTypeById = async ({
         ... on Doc {
           id
           title
+          contentHtml
           doctype {
             id
             name
@@ -401,6 +410,73 @@ export const readDocWithReporterAndDocTypeById = async ({
             email
             firstName
             lastName
+          }
+          source {
+            __typename
+            ... on SourceCycle {
+                fileSize
+                id
+                url
+            }
+            ... on SourceGong {
+                id
+                url
+            }
+            ... on SourceGoogleMeet {
+                id
+                url
+            }
+            ... on SourceHubspot {
+                id
+                url
+            }
+            ... on SourceIntercom {
+                id
+                url
+            }
+            ... on SourceInterface {
+                url
+            }
+            ... on SourceLoom {
+                id
+                url
+            }
+            ... on SourceMail {
+                id
+                url
+            }
+            ... on SourceMicrosoftTeams {
+                id
+                url
+            }
+            ... on SourceNotion {
+                id
+                url
+            }
+            ... on SourceSalesforce {
+                id
+                url
+            }
+            ... on SourceSlack {
+                id
+                url
+            }
+            ... on SourceWeb {
+                id
+                url
+            }
+            ... on SourceZapier {
+                id
+                url
+            }
+            ... on SourceZendesk {
+                id
+                url
+            }
+            ... on SourceZoom {
+                id
+                url
+            }
           }
         }
       }
@@ -816,10 +892,10 @@ export const updateDocSelectAttribute = async ({
       changeDocAttributeValue(
         docId: $docId,
         attributeDefinitionId: $attributeDefinitionId,
-        value: { select: $value.select }
+        value: $value
       ) {
         __typename
-        ... on DocAttributeNumber {
+        ... on DocAttributeSingleSelect {
           id
           value {
             __typename
@@ -840,6 +916,67 @@ export const updateDocSelectAttribute = async ({
   };
 
   const response = await queryCycle<QueryUpdateDocAttributeSelectResponse>({
+    query,
+    variables,
+  });
+
+  return response?.data?.changeDocAttributeValue || null;
+};
+
+type QueryUpdateDocAttributeBooleanResponse = {
+  data: {
+    changeDocAttributeValue: {
+      __typename: string;
+      id: string;
+      value: {
+        id: string;
+        value: boolean;
+      };
+    };
+  };
+};
+
+export const updateDocBooleanAttribute = async ({
+  docId,
+  attributeDefinitionId,
+  value,
+}: {
+  docId: string;
+  attributeDefinitionId: string;
+  value: boolean;
+}) => {
+  const query = `
+    mutation UpdateDocCheckboxAttribute(
+      $docId: ID!,
+      $attributeDefinitionId: ID!,
+      $value: DocAttributeValueInput!
+    ) {
+      changeDocAttributeValue(
+        docId: $docId,
+        attributeDefinitionId: $attributeDefinitionId,
+        value: $value
+      ) {
+        __typename
+        ... on DocAttributeCheckbox {
+          id
+          value {
+            id
+            value
+          }
+        }
+      }
+    }
+  `;
+
+  const variables = {
+    docId,
+    attributeDefinitionId,
+    value: {
+      checkbox: value,
+    },
+  };
+
+  const response = await queryCycle<QueryUpdateDocAttributeBooleanResponse>({
     query,
     variables,
   });
