@@ -97,3 +97,64 @@ export const uploadImage = async (filePath: string): Promise<string | null> => {
   }
   return null;
 };
+
+export const uploadMedia = async (
+  filePath: string,
+  type: 'image' | 'audio' | 'video'
+): Promise<string | null> => {
+  let attempt = 0;
+
+  const mutationMap: Record<string, string> = {
+    image: `mutation UploadImage($file: Upload!) { upload: uploadImage(file: $file) }`,
+    audio: `mutation UploadAudio($file: Upload!) { upload: uploadFile(file: $file) }`,
+    video: `mutation UploadVideo($file: Upload!) { upload: uploadVideo(file: $file) }`,
+  };
+
+  const mutation = mutationMap[type];
+  if (!mutation) {
+    throw new Error(`Unsupported media type: ${type}`);
+  }
+
+  while (attempt < MAX_RETRIES) {
+    try {
+      attempt++;
+      if (attempt > 1) console.log(`Attempt ${attempt} to upload ${type}`);
+
+      const operations = JSON.stringify({
+        query: mutation,
+        variables: { file: null },
+      });
+      const map = JSON.stringify({
+        '1': ['variables.file'],
+      });
+
+      const form = new FormData();
+      form.append('operations', operations);
+      form.append('map', map);
+      form.append(
+        '1',
+        fs.createReadStream(path.resolve(filePath)),
+        path.basename(filePath)
+      );
+
+      const response = await axios.post(graphqlEndpoint, form, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...form.getHeaders(),
+        },
+      });
+
+      if (response.data.errors) {
+        throw new Error(response.data.errors[0].message);
+      }
+
+      return response.data.data.upload;
+    } catch (error: any) {
+      console.error(`Attempt ${attempt} failed with error:`, error?.message);
+      if (attempt >= MAX_RETRIES) {
+        throw new Error(`${type} upload failed after ${MAX_RETRIES} attempts.`);
+      }
+    }
+  }
+  return null;
+};

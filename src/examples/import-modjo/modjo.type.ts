@@ -4,8 +4,8 @@ type ModjoPaginationInput = {
 };
 
 type ModjoCallStartDateRange = {
-  from: string; // ISO date format string (e.g., "2024-10-15T00:00:00.000Z")
-  to: string;
+  start: string; // ISO date format string (e.g., "2024-10-15T00:00:00.000Z")
+  end: string;
 };
 
 type ModjoFilters = {
@@ -40,44 +40,44 @@ type ModjoPaginationOutput = {
   lastPage: number;
 };
 
-type ModjoContact = {
-  contactId: number;
-  name: string;
-  phoneNumber: string;
-  email: string;
-  contactCrmId: string;
-};
+// type ModjoContact = {
+//   contactId: number;
+//   name: string;
+//   phoneNumber: string;
+//   email: string;
+//   contactCrmId: string;
+// };
 
-type ModjoAccount = {
-  accountId: number;
-  accountCrmId: string;
-  name: string;
-};
+// type ModjoAccount = {
+//   accountId: number;
+//   accountCrmId: string;
+//   name: string;
+// };
 
-type ModjoDeal = {
-  dealId: number;
-  dealCrmId: string;
-  name: string;
-};
+// type ModjoDeal = {
+//   dealId: number;
+//   dealCrmId: string;
+//   name: string;
+// };
 
-type ModjoUser = {
-  userId: number;
-  userCrmId: string;
-  email: string;
-  name: string;
-};
+// type ModjoUser = {
+//   userId: number;
+//   userCrmId: string;
+//   email: string;
+//   name: string;
+// };
 
-type ModjoTag = {
-  tagId: number;
-  name: string;
-};
+// type ModjoTag = {
+//   tagId: number;
+//   name: string;
+// };
 
 type ModjoTopic = {
   topicId: number;
   name: string;
 };
 
-type ModjoSpeaker = {
+export type ModjoSpeaker = {
   userId: number;
   userCrmId: string;
   email: string;
@@ -94,34 +94,34 @@ type ModjoTranscript = {
   topics: ModjoTopic[];
 };
 
-type ModjoReviewQuestion = {
-  reviewQuestionId: number;
-  title: string;
-  boost: number;
-};
+// type ModjoReviewQuestion = {
+//   reviewQuestionId: number;
+//   title: string;
+//   boost: number;
+// };
 
-type ModjoReviewAnswer = {
-  reviewAnswerId: number;
-  rating: number;
-  feedback: string;
-  question: ModjoReviewQuestion;
-};
+// type ModjoReviewAnswer = {
+//   reviewAnswerId: number;
+//   rating: number;
+//   feedback: string;
+//   question: ModjoReviewQuestion;
+// };
 
-type ModjoReview = {
-  reviewer: ModjoUser;
-  reviewee: ModjoUser;
-  answers: ModjoReviewAnswer[];
-  rating: number;
-};
+// type ModjoReview = {
+//   reviewer: ModjoUser;
+//   reviewee: ModjoUser;
+//   answers: ModjoReviewAnswer[];
+//   rating: number;
+// };
 
-type ModjoAIScoringResult = {
-  score: number;
-  questionsCount: number;
-  template: {
-    title: string;
-    uuid: string;
-  };
-};
+// type ModjoAIScoringResult = {
+//   score: number;
+//   questionsCount: number;
+//   template: {
+//     title: string;
+//     uuid: string;
+//   };
+// };
 
 type ModjoSummary = {
   content: string;
@@ -133,26 +133,26 @@ type ModjoCallRelations = {
   recording?: {
     url: string;
   };
-  contacts?: ModjoContact[];
-  account?: ModjoAccount[];
-  deal?: ModjoDeal[];
-  users?: ModjoUser[];
-  tags?: ModjoTag[];
-  topics?: ModjoTopic[];
+  // contacts?: ModjoContact[];
+  // account?: ModjoAccount[];
+  // deal?: ModjoDeal[];
+  // users?: ModjoUser[];
+  // tags?: ModjoTag[];
+  // topics?: ModjoTopic[];
   speakers?: ModjoSpeaker[];
-  libraries?: {
-    libraryId: number;
-    name: string;
-  }[];
+  // libraries?: {
+  //   libraryId: number;
+  //   name: string;
+  // }[];
   transcript?: ModjoTranscript[];
-  summary?: ModjoSummary;
+  // summary?: ModjoSummary;
   aiSummary?: ModjoSummary;
-  highlights?: ModjoSummary;
-  reviews?: ModjoReview[];
-  aiScoringResults?: ModjoAIScoringResult[];
+  // highlights?: ModjoSummary;
+  // reviews?: ModjoReview[];
+  // aiScoringResults?: ModjoAIScoringResult[];
 };
 
-type ModjoCall = {
+export type ModjoCall = {
   callId: number;
   title: string;
   startDate: string; // ISO date string

@@ -18,6 +18,14 @@ export type DocWithCustomer = Doc & {
     };
   };
 };
+export type DocWithCustomerAndAssignee = DocWithCustomer & {
+  assignee: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+  };
+};
 
 export type DocWithReporterAndDocType = Doc & DocTypeBase & ReporterBase;
 
@@ -97,6 +105,7 @@ export const createDoc = async ({
   doctypeId,
   attributes,
   contentJSON,
+  contentHTML,
   customerId,
   docSourceId,
   parentId,
@@ -106,11 +115,10 @@ export const createDoc = async ({
   doctypeId: string;
   attributes: {
     attributeDefinitionId: string;
-    value: {
-      checkbox: boolean;
-    };
+    value: DocAttributeValueInput;
   }[];
   contentJSON?: any;
+  contentHTML?: any;
   customerId?: string;
   docSourceId?: string;
   parentId?: string;
@@ -122,6 +130,7 @@ export const createDoc = async ({
       $productId: ID!
       $attributes: [AddNewDocAttributeValue!]
       $contentJSON: JSON
+      $contentHTML: DefaultString
       $customer: CustomerInput
       $docLink: DocLinkInput
       $parentId: ID
@@ -132,6 +141,7 @@ export const createDoc = async ({
         productId: $productId
         attributes: $attributes
         contentJSON: $contentJSON
+        contentHTML: $contentHTML
         customer: $customer
         docLink: $docLink
         parentId: $parentId
@@ -146,7 +156,8 @@ export const createDoc = async ({
     doctypeId,
     productId: workspaceId,
     attributes,
-    contentJSON,
+    contentJSON: contentHTML ? undefined : contentJSON,
+    contentHTML: contentHTML ? contentHTML : undefined,
     customer: customerId ? { id: customerId } : undefined,
     docLink: docSourceId
       ? { blockId: '', content: '', sourceId: docSourceId }
@@ -157,7 +168,7 @@ export const createDoc = async ({
     query,
     variables,
   });
-  console.log('response', response);
+
   if (response?.data?.addNewDoc) {
     return response?.data?.addNewDoc || null;
   } else {
@@ -171,7 +182,7 @@ export const createDoc = async ({
 
 type QueryCreateFeedbackResponse = {
   data: {
-    createFeedback: DocWithCustomer;
+    createFeedback: DocWithCustomerAndAssignee;
   };
 };
 
@@ -224,6 +235,12 @@ export const createFeedback = async ({
           id
           name
         }
+      }
+      assignee {
+        id
+        email
+        firstName
+        lastName
       }
     }
   }
@@ -1129,4 +1146,54 @@ export const searchDocs = async ({
   });
 
   return response?.data?.searchDoc || null;
+};
+
+type QueryUpdateDocAssigneeResponse = {
+  data: {
+    changeDocAssignee: {
+      id: string;
+      assignee: {
+        id: string;
+        __typename: string;
+      };
+    };
+  };
+};
+
+export const updateDocAssignee = async ({
+  docId,
+  userId,
+}: {
+  docId: string;
+  userId: string;
+}) => {
+  const query = `
+    mutation ChangeDocAssignee(
+      $docId: ID!,
+      $userId: ID!
+    ) {
+      changeDocAssignee(
+        docId: $docId,
+        assigneeId: $userId
+      ) {
+        id
+        assignee {
+          id
+          __typename
+        }
+      }
+    }
+  `;
+
+  const variables = {
+    docId,
+    userId,
+  };
+
+  const response = await queryCycle<QueryUpdateDocAssigneeResponse>({
+    query,
+    variables,
+  });
+
+  return response?.data?.changeDocAssignee || null;
 };

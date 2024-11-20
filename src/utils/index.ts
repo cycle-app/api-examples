@@ -2,13 +2,14 @@ import { createObjectCsvWriter } from 'csv-writer';
 
 export * from './ai';
 export * from './attributes';
-export * from './dates';
 export * from './change-log';
 export * from './companies';
 export * from './csv';
 export * from './customers';
+export * from './dates';
 export * from './doc-types';
 export * from './doc';
+export * from './file';
 export * from './releases';
 export * from './workspace';
 

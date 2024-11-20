@@ -238,3 +238,92 @@ export const inviteMember = async ({
   console.log('response', response);
   return response?.data?.inviteProductUser || null;
 };
+
+type QueryProductMembersResponse = {
+  data: {
+    node: {
+      users: {
+        pageInfo: {
+          hasNextPage: boolean;
+          endCursor: string;
+        };
+        edges: {
+          node: {
+            id: string;
+            email: string;
+          };
+        }[];
+      };
+    };
+  };
+};
+
+export const fetchProductMember = async ({
+  workspaceId,
+  email,
+}: {
+  workspaceId: string;
+  email: string;
+}): Promise<{ id: string; email: string } | null | undefined> => {
+  let cursor = '';
+  const pageSize = 50;
+  let member: { id: string; email: string } | null | undefined = undefined;
+  const query = `
+    query productMembers(
+      $productId: ID!,
+      $size: Int!,
+      $cursor: String!,
+      $searchText: DefaultString
+    ) {
+      node(id: $productId) {
+        ... on Product {
+          users(
+            pagination: {size: $size, where: {cursor: $cursor, direction: AFTER}}
+            searchText: $searchText
+          ) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            edges {
+              node {
+                id
+                email
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  while (member === undefined) {
+    const variables: any = {
+      productId: workspaceId,
+      size: pageSize,
+      cursor,
+      searchText: email,
+    };
+    const response = await queryCycle<QueryProductMembersResponse>({
+      query,
+      variables,
+    });
+
+    const edges = response?.data.node.users.edges;
+    if (!edges) {
+      member = null;
+      break;
+    }
+    for (const edge of edges) {
+      if (edge.node.email === email) {
+        member = edge.node;
+        break;
+      }
+    }
+
+    if (!response.data.node.users.pageInfo.hasNextPage) break;
+    cursor = response?.data.node.users.pageInfo.endCursor;
+  }
+
+  return member;
+};
